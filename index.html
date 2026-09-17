@@ -1,0 +1,2130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>FitLog Pro - Gamified Workout RPG</title>
+  <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22FitLog%20Pro%22%2C%22short_name%22%3A%22FitLog%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230a0a0f%22%2C%22theme_color%22%3A%22%238b5cf6%22%7D">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --card-bg: #12131c;
+      --card-border: #232538;
+      --primary: #8b5cf6;
+      --primary-hover: #7c3aed;
+      --accent: #10b981;
+      --gold: #f59e0b;
+      --cyan: #06b6d4;
+      --danger: #ef4444;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --input-bg: #1a1b26;
+      --radius: 14px;
+      --glow: 0 0 15px rgba(139, 92, 246, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding-bottom: 80px;
+      min-height: 100vh;
+    }
+
+    header {
+      background: rgba(18, 19, 28, 0.85);
+      backdrop-filter: blur(10px);
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      font-size: 1.2rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      background: linear-gradient(90deg, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .container {
+      padding: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(18, 19, 28, 0.95);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0;
+      z-index: 1000;
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      width: 20%;
+      transition: all 0.2s;
+    }
+
+    .nav-btn svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+
+    .nav-btn.active {
+      color: var(--primary);
+      filter: drop-shadow(0 0 6px var(--primary));
+    }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .btn {
+      background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+      color: white;
+      border: none;
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      font-weight: 700;
+      font-size: 0.9rem;
+      width: 100%;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: var(--glow);
+      transition: all 0.2s;
+    }
+
+    .btn:active { transform: scale(0.98); opacity: 0.9; }
+    .btn-secondary { background: #232538; color: var(--text); box-shadow: none; border: 1px solid var(--card-border); }
+    .btn-accent { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 0 15px rgba(16, 185, 129, 0.35); }
+    .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 0 15px rgba(239, 68, 68, 0.35); }
+    .btn-sm { padding: 6px 10px; font-size: 0.78rem; width: auto; }
+
+    .rpg-banner {
+      background: linear-gradient(135deg, #1e1b4b 0%, #311b92 50%, #4c1d95 100%);
+      border: 1px solid #6d28d9;
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 0 25px rgba(124, 58, 237, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .rpg-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .rpg-title {
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: #f3e8ff;
+      text-shadow: 0 0 10px rgba(192, 132, 252, 0.8);
+      letter-spacing: 0.5px;
+    }
+
+    .rpg-level {
+      font-size: 0.85rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #ec4899, #8b5cf6);
+      padding: 4px 10px;
+      border-radius: 20px;
+      color: #fff;
+      box-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
+    }
+
+    .xp-bar-container {
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 12px;
+      height: 14px;
+      overflow: hidden;
+      margin-bottom: 6px;
+      border: 1px solid rgba(255,255,255,0.15);
+      position: relative;
+    }
+
+    .xp-bar-fill {
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+      height: 100%;
+      width: 0%;
+      transition: width 0.4s ease;
+      box-shadow: 0 0 12px #ec4899;
+    }
+
+    .xp-text {
+      font-size: 0.72rem;
+      color: #d8b4fe;
+      text-align: right;
+      font-weight: 600;
+    }
+
+    .achievements-stats-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .badges-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      max-height: 520px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .badge-card {
+      background: #0d0e15;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+      opacity: 0.35;
+      filter: grayscale(100%);
+      transition: all 0.3s ease;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .badge-card.unlocked {
+      opacity: 1;
+      filter: grayscale(0%);
+      border-color: var(--gold);
+      background: linear-gradient(180deg, #1e1b2e 0%, #0d0e15 100%);
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+    }
+
+    .badge-icon { font-size: 1.8rem; margin-bottom: 6px; }
+    .badge-name { font-size: 0.72rem; font-weight: 800; color: var(--text); margin-bottom: 2px; line-height: 1.1; }
+    .badge-desc { font-size: 0.6rem; color: var(--text-muted); line-height: 1.2; }
+    .badge-xp { font-size: 0.6rem; font-weight: 800; color: var(--gold); margin-top: 6px; }
+
+    .live-stats-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      background: #0d0e15;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 10px;
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .stat-item .stat-value {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--cyan);
+    }
+
+    .stat-item .stat-label {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.9rem;
+      margin-top: 4px;
+      margin-bottom: 10px;
+    }
+
+    label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .exercise-card {
+      background: #161826;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .exercise-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .prev-performance {
+      background: #0d0e15;
+      border: 1px solid #1e2030;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.75rem;
+      color: #60a5fa;
+      margin-bottom: 10px;
+    }
+
+    .set-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      padding: 4px;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+
+    .set-row.completed {
+      background: rgba(16, 185, 129, 0.15);
+    }
+
+    .set-row span.set-num {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      width: 20px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .set-row input {
+      margin: 0;
+      text-align: center;
+    }
+
+    .set-1rm {
+      font-size: 0.72rem;
+      color: var(--accent);
+      width: 55px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .btn-check {
+      background: #232538;
+      color: #9ca3af;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .btn-check.completed {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    }
+
+    #timer-widget {
+      position: fixed;
+      top: 56px;
+      right: 14px;
+      background: #1e1b2e;
+      border: 1px solid var(--primary);
+      border-radius: 30px;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: var(--glow);
+      z-index: 90;
+    }
+
+    #timer-display {
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--cyan);
+      font-family: monospace;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .calendar-day-header {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      padding: 4px 0;
+      font-weight: 700;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--input-bg);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .calendar-day.has-workout::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      position: absolute;
+      bottom: 4px;
+      box-shadow: 0 0 6px var(--accent);
+    }
+
+    .calendar-day.today { border: 2px solid var(--primary); }
+
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .heatmap-item {
+      background: #0d0e15;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #1e2030;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top:0; left:0; right:0; bottom:0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(5px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal.active { display: flex; }
+
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 20px;
+      width: 100%;
+      max-width: 450px;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+  
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap');
+    :root { --bg:#0c101a; --card-bg:#151b28; --card-border:#263149; --primary:#7795ff; --primary-hover:#607ef0; --accent:#42d39b; --gold:#f2c56a; --cyan:#67c7ff; --danger:#f07786; --text:#f6f8ff; --text-muted:#a6b0c3; --input-bg:#20293a; --radius:16px; --glow:0 8px 24px rgba(104,133,255,.16); }
+    *{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif} body{background:radial-gradient(circle at top left,#172441 0,transparent 34%),var(--bg);padding-bottom:88px} h1,h2,h3,.rpg-title,.stat-value{font-family:'Outfit','DM Sans',sans-serif} header{background:rgba(12,16,26,.8);border-color:rgba(119,149,255,.16);padding:15px 18px} header h1{background:linear-gradient(100deg,#fff,#9fb3ff);-webkit-background-clip:text;letter-spacing:.2px}.container{max-width:740px;padding:20px 16px}.card{background:linear-gradient(145deg,rgba(25,32,47,.98),rgba(18,24,36,.98));border-color:var(--card-border);border-radius:var(--radius);box-shadow:0 8px 26px rgba(0,0,0,.16);transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}.card:hover{border-color:#3a4a6a;box-shadow:0 12px 30px rgba(0,0,0,.22)}.btn{border-radius:11px;min-height:43px;background:linear-gradient(135deg,var(--primary),var(--primary-hover));box-shadow:0 7px 15px rgba(96,126,240,.2);transition:transform .16s ease,filter .16s ease}.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}.btn:active{transform:translateY(0) scale(.98)}.btn-secondary{background:#283348;border-color:#39465e;box-shadow:none}.btn-accent{background:linear-gradient(135deg,#4bdfa7,#27b982);color:#072117}.btn-danger{background:linear-gradient(135deg,#ef8290,#da5e70);box-shadow:none}.rpg-banner{background:linear-gradient(135deg,#243768,#41276e 58%,#30205a);border-color:#617deb;box-shadow:0 14px 34px rgba(58,68,172,.3)}.xp-bar-container{height:11px}.xp-bar-fill{background:linear-gradient(90deg,#62d8ff,#8194ff,#d17dff);box-shadow:0 0 12px rgba(129,148,255,.72)}input,select{border-radius:10px;border-color:#34415a;background:var(--input-bg)}nav{background:rgba(17,23,35,.92);border-color:#29354b;backdrop-filter:blur(16px)}.nav-btn.active{color:#8ca5ff;filter:drop-shadow(0 0 6px rgba(140,165,255,.55))}.exercise-card{background:#182030;border-color:#2c3950;box-shadow:none}.prev-performance{border-color:#344159;background:#1c2637}.live-stats-bar{background:#1c2637;border-color:#33435e;box-shadow:none}.btn-check.completed{background:var(--accent);border-color:var(--accent)}.rank-overview{display:grid;grid-template-columns:1.35fr 1fr;gap:12px;margin-bottom:16px}.rank-hero,.rank-stats{border:1px solid #344662;border-radius:14px;padding:16px;background:linear-gradient(145deg,#1c2a46,#1b2034)}.rank-hero .rank-name{font:800 1.5rem 'Outfit',sans-serif;margin:3px 0}.rank-number{font:800 2.3rem 'Outfit',sans-serif;color:#afbeff;line-height:1}.rank-xp-line{margin-top:10px;color:var(--text-muted);font-size:.84rem}.rank-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:#182030}.rank-stat{background:#202b3f;border-radius:10px;padding:10px}.rank-stat b{display:block;font:700 1.1rem 'Outfit',sans-serif;color:#f5f7ff}.rank-stat span{font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em}.rank-tab-summary{background:linear-gradient(135deg,#22345e,#29204a);border:1px solid #536fc7;border-radius:var(--radius);padding:16px;margin-bottom:16px}.rank-tab-summary h2{font-size:1.25rem;margin:3px 0}.rank-mini-bar{height:9px;border-radius:9px;background:#101729;overflow:hidden;margin-top:10px}.rank-mini-bar span{display:block;height:100%;background:linear-gradient(90deg,#68d5ff,#8798ff);transition:width .35s ease}.toast{animation:slide-in .25s ease both}@keyframes slide-in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}@media(max-width:520px){.rank-overview{grid-template-columns:1fr}.container{padding:15px 12px}.card{padding:14px}}
+
+  
+    /* Active workout: large, high-contrast controls for use between sets. */
+    #active-workout-container > .card { border-color:#364867; background:linear-gradient(155deg,#182234 0%,#141c2a 100%); }
+    #active-workout-container input[type="text"] { background:transparent; border:0; border-bottom:1px solid #35445f; border-radius:0; padding:4px 0 9px; color:#fff!important; font-family:'Outfit',sans-serif; font-size:1.32rem!important; }
+    #active-workout-container input[type="text"]:focus { outline:0; border-bottom-color:#8ca5ff; }
+    #workout-session-note { color:var(--text); background:#1d283a; border:1px solid #34435d; border-radius:10px; width:100%; padding:9px 11px; min-height:48px; resize:vertical; }
+    #active-workout-container .live-stats-bar { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:8px; background:#1b2638; }
+    #active-workout-container .stat-item { background:#222f44; border-radius:9px; padding:8px 4px; }
+    #active-workout-container .stat-value { font-size:1.05rem; color:#f7f9ff; }
+    #active-workout-container .stat-label { font-size:.66rem; letter-spacing:.06em; color:#a8b7cd; }
+    #active-workout-container .exercise-card { padding:14px; margin:14px 0; background:linear-gradient(145deg,#1c2638,#192232); border:1px solid #34435c; border-radius:13px; }
+    #active-workout-container .exercise-header { margin-bottom:4px; }
+    #active-workout-container .exercise-header h3 { font-family:'Outfit',sans-serif; font-size:1.16rem; letter-spacing:.01em; }
+    #active-workout-container .prev-performance { margin:0 0 10px; padding:8px 10px; border-left:3px solid #8198ff; background:#222e43; border-radius:0 8px 8px 0; line-height:1.45; }
+    #active-workout-container .set-row { display:grid; grid-template-columns:32px minmax(76px,1fr) minmax(66px,1fr) 55px 44px 29px; gap:7px; padding:7px; margin:5px 0; background:#202b3e; border:1px solid #33425a; border-radius:10px; align-items:center; }
+    #active-workout-container .set-row.completed { border-color:rgba(66,211,155,.55); background:linear-gradient(90deg,rgba(42,111,84,.34),#202d3f); }
+    #active-workout-container .set-num { font-family:'Outfit',sans-serif; font-weight:700; color:#afbeff; }
+    #active-workout-container .set-row input[type="number"] { margin:0; min-height:45px; padding:6px; text-align:center; font-size:1.05rem; font-weight:700; border:1px solid #43536e; background:#121a28; color:#f7f9ff; }
+    #active-workout-container .set-row input[type="number"]:focus { outline:2px solid #839dff; border-color:transparent; }
+    #active-workout-container .set-1rm { font-size:.74rem; color:#b1bdd1; text-align:center; }
+    #active-workout-container .btn-check { min-height:45px; width:44px; border-radius:9px; font-size:1.1rem; }
+    #active-workout-container .btn-check:not(.completed) { background:#34425b; border-color:#50617c; color:#d8e1f2; }
+    #active-workout-container .btn-check.completed { background:#42d39b; color:#082419; }
+    #active-workout-container .set-row .btn-danger { min-height:36px; padding:3px; background:transparent; border:0; color:#97a7c0; }
+    #active-workout-container .set-row .btn-danger:hover { color:#ff9ba5; }
+    #active-workout-container .exercise-card > .btn-secondary { background:#29364d; border-color:#40506b; min-height:39px; }
+    #active-workout-container > .card > .btn { margin-top:8px; }
+    #active-workout-container > .card > .btn-accent { font-size:1rem; min-height:50px; }
+    @media(max-width:520px){#active-workout-container .set-row{grid-template-columns:28px minmax(64px,1fr) minmax(55px,1fr) 42px 40px 20px;gap:5px;padding:6px}#active-workout-container .set-row input[type="number"]{min-height:43px;font-size:1rem;padding:4px}#active-workout-container .set-1rm{font-size:.62rem;overflow:hidden}#active-workout-container .btn-check{width:40px;min-height:43px}#active-workout-container .set-row .btn-danger{font-size:.7rem}#active-workout-container .exercise-header h3{font-size:1.07rem}}
+
+  
+    .daily-bonus-card{border-color:#3a5587;background:linear-gradient(135deg,#1b2c4b,#20213e)}.eyebrow{font-size:.67rem;font-weight:800;letter-spacing:.1em;color:#9fb5ff}.bonus-xp{font:800 1rem 'Outfit',sans-serif;color:#7ce7b7;background:#173d35;padding:6px 9px;border-radius:8px}.bonus-progress{height:8px;background:#111a2b;border-radius:10px;overflow:hidden}.bonus-progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#65d9ff,#7f94ff);transition:width .3s ease}.section-row{display:flex;justify-content:space-between;align-items:center;gap:10px}.progression-guide h3{margin-bottom:8px}.progression-guide h4{margin:16px 0 6px}.guide-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin:12px 0}.guide-grid>div{background:#202b3e;border:1px solid #32425d;border-radius:9px;padding:8px;font-size:.78rem}.guide-grid b{display:block;color:#eaf0ff}.guide-grid span{color:#75e0b1;font-weight:800}.progression-guide details{border-top:1px solid #2d3a51;padding:10px 0}.progression-guide summary{cursor:pointer;font-weight:700;color:#cbd6f2}.rank-path{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:10px}.rank-path span{font-size:.75rem;padding:6px 7px;background:#202b3e;border-radius:7px;color:#c4d0e9}@media(max-width:460px){.rank-path{grid-template-columns:1fr}.guide-grid{grid-template-columns:1fr}}
+    .bonus-xp-card{border-color:#3a5587;background:linear-gradient(135deg,#1b2c4b,#20213e);margin-bottom:14px}.bonus-xp-card h3{font-size:0.95rem;margin-bottom:2px}.bonus-xp-card p{font-size:0.72rem;color:var(--text-muted);margin-bottom:10px}.bonus-chip-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.bonus-chip{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:10px;border:1px solid #32425d;background:#182234;cursor:pointer;transition:transform .12s ease,border-color .12s ease,background .12s ease;-webkit-tap-highlight-color:transparent}.bonus-chip:active{transform:scale(.97)}.bonus-chip.selected{border-color:#4bdfa7;background:linear-gradient(135deg,rgba(75,223,167,.18),rgba(39,185,130,.1));box-shadow:0 0 0 1px rgba(75,223,167,.35) inset}.bonus-chip .bonus-chip-icon{font-size:1.05rem}.bonus-chip .bonus-chip-text{flex:1;min-width:0}.bonus-chip .bonus-chip-label{display:block;font-size:0.76rem;font-weight:700;color:#eaf0ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bonus-chip .bonus-chip-desc{display:block;font-size:0.64rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bonus-chip .bonus-chip-xp{font-size:0.7rem;font-weight:800;color:#7ce7b7;white-space:nowrap}.bonus-chip.selected .bonus-chip-xp{color:#9dffce}.bonus-xp-total-row{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid #2d3a51;font-size:0.8rem;color:var(--text-muted)}.bonus-xp-total-row b{color:#7ce7b7;font-size:0.95rem}@media(max-width:460px){.bonus-chip-grid{grid-template-columns:1fr}}
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>FitLog RPG</h1>
+    <div style="display:flex; gap:6px;">
+      <button class="btn btn-sm btn-secondary" onclick="openPlateCalculator()">🏋️ Plates</button>
+      <button class="btn btn-sm btn-secondary" onclick="openTimerModal()">⏱️ Timer</button>
+    </div>
+  </header>
+
+  <div id="timer-widget" style="display: none;">
+    <button class="btn btn-sm btn-secondary" onclick="adjustRestTimer(-15)" style="padding: 2px 6px;">-15s</button>
+    <span id="timer-display">00:00</span>
+    <button class="btn btn-sm btn-secondary" onclick="adjustRestTimer(15)" style="padding: 2px 6px;">+15s</button>
+    <button class="btn btn-sm btn-danger" onclick="stopTimer()" style="padding: 2px 8px; margin-left:4px;">✕</button>
+  </div>
+
+  <div class="container">
+
+    <!-- WORKOUT VIEW -->
+    <div id="view-workout" class="view active">
+      <div id="active-workout-container">
+        <div class="rpg-banner">
+          <div class="rpg-header">
+            <span class="rpg-title" id="rpg-rank-title">Bronze Novice I</span>
+            <span class="rpg-level" id="rpg-level-tag">Lvl 1</span>
+          </div>
+          <div class="xp-bar-container">
+            <div class="xp-bar-fill" id="xp-bar-fill"></div>
+          </div>
+          <div class="xp-text" id="xp-text-display">0 / 250 XP</div>
+        </div>
+
+        <div class="card">
+          <h2 style="margin-bottom: 12px; font-weight: 800;">Start Quest</h2>
+          <label>Select Your Split Template:</label>
+          <div id="template-buttons" style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px; margin-bottom: 16px;"></div>
+          
+          <button class="btn btn-accent" onclick="startNewWorkout()">+ Blank Session</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXERCISES VIEW -->
+    <div id="view-bank" class="view">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h2>Exercise Bank</h2>
+        <button class="btn btn-sm" onclick="openAddExerciseModal()">+ New</button>
+      </div>
+      <input type="text" id="bank-search" placeholder="Search exercises or muscle..." oninput="renderExerciseBank()" />
+      <div id="exercise-list"></div>
+    </div>
+
+    <!-- HISTORY VIEW -->
+    <div id="view-history" class="view">
+      <h2>Workout Log & Volume</h2>
+      <div class="card" style="margin-top: 12px;">
+        <h3>Weekly Muscle Set Volume</h3>
+        <div id="muscle-heatmap" class="heatmap-grid"></div>
+      </div>
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <button class="btn btn-sm btn-secondary" onclick="changeMonth(-1)">&lt;</button>
+          <h3 id="calendar-month-year"></h3>
+          <button class="btn btn-sm btn-secondary" onclick="changeMonth(1)">&gt;</button>
+        </div>
+        <div class="calendar-grid" id="calendar-grid"></div>
+      </div>
+      <div id="selected-day-logs"></div>
+    </div>
+
+    <!-- RPG VIEW -->
+    <div id="view-rpg" class="view">
+      <h2>Hero Level & Achievements</h2>
+      
+
+      <div class="rank-tab-summary">
+        <div class="muted">YOUR CURRENT RANK</div>
+        <h2 id="rank-visible-name">Bronze Novice I</h2>
+        <div class="section-row"><span id="rank-visible-level">Level 1</span><span id="rank-visible-xp">0 XP</span></div>
+        <div class="rank-mini-bar"><span id="rank-visible-bar" style="width:0%"></span></div>
+        <div class="muted" id="rank-visible-next" style="margin-top:8px;">Progress to Level 2</div>
+      </div>
+
+      <div class="card progression-guide" id="progression-guide-container"></div>
+
+      <div class="card">
+        <div class="achievements-stats-header">
+          <h3>Achievements</h3>
+          <span id="achievement-unlocked-count" style="font-weight: 800; color: var(--gold);">0 / 100</span>
+        </div>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px;">Complete quests, track metrics, and conquer obscure gym challenges to unlock XP and badges.</p>
+        <div id="badges-container" class="badges-grid"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS VIEW -->
+    <div id="view-settings" class="view">
+      <h2>Settings & Data</h2>
+      <div class="card" style="margin-top: 12px;">
+        <h3>Rest Timer Settings</h3>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-top:8px; margin-bottom:12px; color:var(--text);">
+          <input type="checkbox" id="auto-timer-toggle" onchange="toggleAutoTimer(this.checked)" style="width:auto; margin:0;" />
+          Auto-Start Rest Timer on Set Completion
+        </label>
+        <label>Default Rest Duration</label>
+        <select id="auto-timer-seconds" onchange="updateDefaultRestTime(this.value)">
+          <option value="30">30 seconds</option>
+          <option value="45">45 seconds</option>
+          <option value="60">60 seconds (1 min)</option>
+          <option value="90">90 seconds (1.5 min)</option>
+          <option value="120">120 seconds (2 min)</option>
+          <option value="180">180 seconds (3 min)</option>
+        </select>
+        <button class="btn btn-sm btn-secondary" onclick="requestNotificationPermission()" style="margin-top:6px;">🔔 Enable Push Notifications</button>
+      </div>
+
+      <div class="card">
+        <h3>Data Backup</h3>
+        <button class="btn btn-secondary" onclick="exportData()" style="margin-bottom: 8px; margin-top:8px;">📥 Export JSON Backup</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">📤 Import JSON Data</button>
+        <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)" />
+        <button class="btn btn-danger" onclick="clearAllData()" style="margin-top: 16px;">⚠️ Clear All Data</button>
+      </div>
+    </div>
+
+  </div>
+
+  <nav>
+    <button class="nav-btn active" onclick="switchView('workout', this)">
+      <svg viewBox="0 0 24 24"><path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 6.29 3.43 4.86 2 3.43 3.43 2 4.86 3.43 6.29 2 7.71 3.43 9.14 2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22 14.86 20.57 16.29 22 17.71 20.57 19.14 22 20.57 20.57 22 19.14 20.57 17.71 22 16.29 20.57 14.86z"/></svg>
+      Quest
+    </button>
+    <button class="nav-btn" onclick="switchView('bank', this)">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+      Exercises
+    </button>
+    <button class="nav-btn" onclick="switchView('rpg', this)">
+      <svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.8L19.3 19H4.7L12 5.8zM11 10h2v4h-2zm0 5h2v2h-2z"/></svg>
+      Rank
+    </button>
+    <button class="nav-btn" onclick="switchView('history', this)">
+      <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
+      History
+    </button>
+    <button class="nav-btn" onclick="switchView('settings', this)">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6z"/></svg>
+      Settings
+    </button>
+  </nav>
+
+  <!-- MODALS -->
+  <div id="plate-modal" class="modal">
+    <div class="modal-content">
+      <h3>Barbell Plate Calculator</h3>
+      <label>Target Weight (lbs)</label>
+      <input type="number" id="plate-target" value="225" oninput="calculatePlates()" />
+      <label>Barbell Weight</label>
+      <select id="bar-weight" onchange="calculatePlates()">
+        <option value="45">45 lbs (Standard Olympic Bar)</option>
+        <option value="35">35 lbs (Women's Bar)</option>
+        <option value="25">25 lbs (EZ Curl Bar)</option>
+      </select>
+      <div id="plate-results" style="margin: 12px 0; background: #0d0e15; padding: 12px; border-radius: 8px; font-size: 0.9rem;"></div>
+      <button class="btn btn-secondary" onclick="closeModal('plate-modal')">Close</button>
+    </div>
+  </div>
+
+  <div id="chart-modal" class="modal">
+    <div class="modal-content">
+      <h3 id="chart-title">Exercise 1RM Trend</h3>
+      <div style="height:250px; margin: 12px 0;">
+        <canvas id="progressChart"></canvas>
+      </div>
+      <button class="btn btn-secondary" onclick="closeModal('chart-modal')">Close</button>
+    </div>
+  </div>
+
+  <div id="exercise-picker-modal" class="modal">
+    <div class="modal-content">
+      <h3>Select Exercise</h3>
+      <input type="text" id="picker-search" placeholder="Search..." oninput="filterPickerList()" />
+      <div id="picker-list" style="max-height: 280px; overflow-y: auto; margin-bottom: 12px;"></div>
+      <button class="btn btn-secondary" onclick="closeModal('exercise-picker-modal')">Cancel</button>
+    </div>
+  </div>
+
+  <div id="add-exercise-modal" class="modal">
+    <div class="modal-content">
+      <h3>New Exercise</h3>
+      <label>Exercise Name</label>
+      <input type="text" id="new-ex-name" placeholder="e.g. Incline Bench Press" />
+      <label>Muscle Group</label>
+      <select id="new-ex-muscle">
+        <option value="Chest">Chest</option>
+        <option value="Back">Back</option>
+        <option value="Legs">Legs</option>
+        <option value="Shoulders">Shoulders</option>
+        <option value="Arms">Arms</option>
+        <option value="Core">Core</option>
+        <option value="Cardio">Cardio</option>
+      </select>
+      <label>Type</label>
+      <select id="new-ex-type">
+        <option value="reps">Weight & Reps</option>
+        <option value="time">Time & Distance</option>
+      </select>
+      <button class="btn btn-accent" onclick="saveNewExercise()">Save Exercise</button>
+      <button class="btn btn-secondary" onclick="closeModal('add-exercise-modal')" style="margin-top: 8px;">Cancel</button>
+    </div>
+  </div>
+
+  <div id="timer-modal" class="modal">
+    <div class="modal-content" style="text-align: center;">
+      <h3>Rest Timer</h3>
+      <div style="display: flex; justify-content: center; gap: 8px; margin: 16px 0;">
+        <button class="btn btn-sm btn-secondary" onclick="startTimer(30)">30s</button>
+        <button class="btn btn-sm btn-secondary" onclick="startTimer(45)">45s</button>
+        <button class="btn btn-sm btn-secondary" onclick="startTimer(60)">60s</button>
+        <button class="btn btn-sm btn-secondary" onclick="startTimer(90)">90s</button>
+        <button class="btn btn-sm btn-secondary" onclick="startTimer(120)">2m</button>
+      </div>
+      <button class="btn btn-danger" onclick="stopTimer()">Stop Timer</button>
+      <button class="btn btn-secondary" onclick="closeModal('timer-modal')" style="margin-top: 8px;">Close</button>
+    </div>
+  </div>
+
+  <script>
+    const defaultExercises = [
+      { id: 'ex_1', name: 'Machine Rows', type: 'reps', muscle: 'Back' },
+      { id: 'ex_2', name: 'Chest-Supported T-Bar / DB Rows', type: 'reps', muscle: 'Back' },
+      { id: 'ex_3', name: 'Lat Pulldowns (Wide Grip)', type: 'reps', muscle: 'Back' },
+      { id: 'ex_4', name: 'Incline Dumbbell Bicep Curls', type: 'reps', muscle: 'Arms' },
+      { id: 'ex_5', name: 'Leg Press', type: 'reps', muscle: 'Legs' },
+      { id: 'ex_6', name: 'Terminal Knee Extensions (TKEs)', type: 'reps', muscle: 'Legs' },
+      { id: 'ex_7', name: 'Seated Calf Raises', type: 'reps', muscle: 'Legs' },
+      { id: 'ex_8', name: 'DB Seated Shoulder Press', type: 'reps', muscle: 'Shoulders' },
+      { id: 'ex_9', name: 'Alternating Neutral-Grip Incline DB Press', type: 'reps', muscle: 'Chest' },
+      { id: 'ex_10', name: 'Slow Dumbbell Lateral Raises', type: 'reps', muscle: 'Shoulders' },
+      { id: 'ex_11', name: 'Cable Tricep Pushdowns', type: 'reps', muscle: 'Arms' },
+      { id: 'ex_12', name: 'Romanian Deadlifts (RDLs)', type: 'reps', muscle: 'Legs' },
+      { id: 'ex_13', name: 'Machine Hip Thrusts', type: 'reps', muscle: 'Legs' },
+      { id: 'ex_14', name: 'Single-Arm Dumbbell Rows', type: 'reps', muscle: 'Back' },
+      { id: 'ex_15', name: 'Cable Lat Pullovers', type: 'reps', muscle: 'Back' },
+      { id: 'ex_16', name: 'Standing Barbell Bicep Curls', type: 'reps', muscle: 'Arms' },
+      { id: 'ex_17', name: 'Tricep Overhead Cable Extensions', type: 'reps', muscle: 'Arms' },
+      { id: 'ex_18', name: 'Cable Lateral Raises', type: 'reps', muscle: 'Shoulders' },
+      { id: 'ex_19', name: 'Crunch Machine', type: 'reps', muscle: 'Core' },
+      { id: 'ex_20', name: 'Ab Wheel Rollouts', type: 'reps', muscle: 'Core' },
+      { id: 'ex_21', name: 'Hanging Knee Raises', type: 'reps', muscle: 'Core' },
+      { id: 'ex_22', name: 'Pallof Press', type: 'reps', muscle: 'Core' },
+      { id: 'ex_23', name: 'Static Bosu Ball Plank', type: 'time', muscle: 'Core' },
+      { id: 'ex_24', name: 'Leg Press Isometric Holds', type: 'time', muscle: 'Legs' },
+      { id: 'ex_25', name: 'Nordic Hamstring Curls', type: 'reps', muscle: 'Legs' },
+      { id: 'ex_26', name: 'Standing Calf Raises', type: 'reps', muscle: 'Legs' },
+      { id: 'ex_27', name: 'Tibialis Raises', type: 'reps', muscle: 'Legs' },
+      { id: 'ex_28', name: 'Elliptical Cardio', type: 'time', muscle: 'Cardio' }
+    ];
+
+    const defaultTemplates = [
+      { id: 'tpl_1', name: 'Day 1: Upper - Back & Pull Strength', exercises: ['Machine Rows', 'Chest-Supported T-Bar / DB Rows', 'Lat Pulldowns (Wide Grip)', 'Incline Dumbbell Bicep Curls', 'Elliptical Cardio'] },
+      { id: 'tpl_2', name: 'Day 2: Lower A - Quads & Knee Tendon Health', exercises: ['Leg Press', 'Terminal Knee Extensions (TKEs)', 'Seated Calf Raises', 'Elliptical Cardio'] },
+      { id: 'tpl_3', name: 'Day 3: Upper - Protected Push & Shoulders', exercises: ['DB Seated Shoulder Press', 'Alternating Neutral-Grip Incline DB Press', 'Slow Dumbbell Lateral Raises', 'Cable Tricep Pushdowns', 'Elliptical Cardio'] },
+      { id: 'tpl_4', name: 'Day 4: Lower B - Hips & Posterior Chain', exercises: ['Romanian Deadlifts (RDLs)', 'Machine Hip Thrusts', 'Seated Calf Raises', 'Elliptical Cardio'] },
+      { id: 'tpl_5', name: 'Day 5: Upper - Back & Arm Hypertrophy', exercises: ['Single-Arm Dumbbell Rows', 'Cable Lat Pullovers', 'Standing Barbell Bicep Curls', 'Tricep Overhead Cable Extensions', 'Cable Lateral Raises', 'Elliptical Cardio'] },
+      { id: 'tpl_6', name: 'Day 6: Core & Correctives', exercises: ['Crunch Machine', 'Ab Wheel Rollouts', 'Hanging Knee Raises', 'Pallof Press', 'Static Bosu Ball Plank', 'Elliptical Cardio'] },
+      { id: 'tpl_7', name: 'Day 7: Tendon Isometrics & Calf Volume', exercises: ['Leg Press Isometric Holds', 'Nordic Hamstring Curls', 'Standing Calf Raises', 'Tibialis Raises', 'Elliptical Cardio'] }
+    ];
+
+    const rankTiers = [
+      [10, 'Beginner'], [20, 'Novice'], [30, 'Apprentice'], [40, 'Lifter'], [50, 'Iron Adept'],
+      [60, 'Strength Warrior'], [70, 'Iron Vanguard'], [80, 'Elite Lifter'], [90, 'Master of Iron'],
+      [100, 'Iron Legend'], [125, 'Legendary Lifter'], [150, 'Titan of Iron'], [200, 'Strength Icon'],
+      [300, 'Hall of Iron'], [Infinity, 'Eternal Legend']
+    ];
+
+    function getTitleForLevel(level) {
+      const tier = rankTiers.find(([maxLevel]) => level <= maxLevel) || rankTiers[rankTiers.length - 1];
+      const tierStart = rankTiers[rankTiers.indexOf(tier) - 1]?.[0] || 0;
+      return `${tier[1]} ${level - tierStart}`;
+    }
+
+    // Total XP threshold for a level. Each new level costs 150 + 15 × prior level.
+    function getRequiredXPForLevel(level) {
+      const n = Math.max(0, level - 1);
+      return Math.floor(150 * n + 7.5 * n * (n - 1));
+    }
+
+    function calculateLevelAndXP(totalXP) {
+      let lvl = 1;
+      while (totalXP >= getRequiredXPForLevel(lvl + 1)) lvl++;
+      const prevXP = getRequiredXPForLevel(lvl);
+      const nextXP = getRequiredXPForLevel(lvl + 1);
+      const currentLevelXP = totalXP - prevXP;
+      const neededLevelXP = nextXP - prevXP;
+      return { level: lvl, title: getTitleForLevel(lvl), currentLevelXP, neededLevelXP,
+        progressPct: Math.min(100, Math.floor((currentLevelXP / neededLevelXP) * 100)), nextXpTotal: nextXP };
+    }
+
+    // Optional, self-reported bonus XP perks the user can toggle on during an active workout.
+    // Selected perks are totalled and awarded on top of the flat +150 XP quest-completion reward.
+    const workoutBonusXPOptions = [
+      { id: 'new_pr',        icon: '🏆', label: 'New PR',           desc: 'Beat a previous best lift', xp: 50 },
+      { id: 'no_skips',      icon: '✅', label: 'Zero Skips',        desc: 'Completed every planned set', xp: 25 },
+      { id: 'high_intensity',icon: '🔥', label: 'High Intensity',   desc: 'Pushed sets near failure', xp: 25 },
+      { id: 'extra_mile',    icon: '➕', label: 'Extra Mile',        desc: 'Added sets/cardio beyond plan', xp: 20 },
+      { id: 'fasted',        icon: '⏳', label: 'Fasted Training',  desc: 'Trained in a fasted state', xp: 20 },
+      { id: 'early_bird',    icon: '🌅', label: 'Early Bird',        desc: 'Trained before 8am', xp: 15 },
+      { id: 'full_focus',    icon: '🎯', label: 'Full Focus',        desc: 'Distraction-free session', xp: 15 },
+      { id: 'hydrated',      icon: '💧', label: 'Fully Hydrated',    desc: 'Drank water all session', xp: 10 }
+    ];
+
+    function getWorkoutBonusXPTotal() {
+      if (!currentWorkout || !currentWorkout.selectedBonuses) return 0;
+      return currentWorkout.selectedBonuses.reduce((sum, id) => {
+        const opt = workoutBonusXPOptions.find(o => o.id === id);
+        return sum + (opt ? opt.xp : 0);
+      }, 0);
+    }
+
+    function toggleWorkoutBonus(id) {
+      if (!currentWorkout) return;
+      if (!currentWorkout.selectedBonuses) currentWorkout.selectedBonuses = [];
+      const idx = currentWorkout.selectedBonuses.indexOf(id);
+      if (idx === -1) currentWorkout.selectedBonuses.push(id);
+      else currentWorkout.selectedBonuses.splice(idx, 1);
+      renderActiveWorkout();
+    }
+
+    // EXACTLY 100 ACHIEVEMENTS
+    const allBadges = [
+      // 1-15: Quest & Session Count
+      { id: 'first_workout', name: 'First Blood', icon: '⚔️', desc: 'Complete 1 quest workout', xp: 50 },
+      { id: 'workout_3', name: 'Novice Adventurer', icon: '🗡️', desc: 'Complete 3 quest workouts', xp: 100 },
+      { id: 'workout_5', name: 'High Five Lifter', icon: '✋', desc: 'Complete 5 quest workouts', xp: 120 },
+      { id: 'workout_7', name: 'Weekly Grind', icon: '🔥', desc: 'Complete 7 quest workouts', xp: 150 },
+      { id: 'workout_10', name: 'Consistent Pioneer', icon: '🛡️', desc: 'Complete 10 quest workouts', xp: 250 },
+      { id: 'workout_15', name: 'Quest Veteran', icon: '🏅', desc: 'Complete 15 quest workouts', xp: 350 },
+      { id: 'workout_20', name: 'Iron Warrior', icon: '⚔️', desc: 'Complete 20 quest workouts', xp: 450 },
+      { id: 'workout_30', name: 'Iron Month', icon: '🗓️', desc: 'Complete 30 quest workouts', xp: 600 },
+      { id: 'workout_50', name: 'Half-Centurion', icon: '🛡️', desc: 'Complete 50 quest workouts', xp: 1000 },
+      { id: 'workout_75', name: 'Seasoned Crusader', icon: '🎖️', desc: 'Complete 75 quest workouts', xp: 1500 },
+      { id: 'workout_100', name: 'Centurion', icon: '👑', desc: 'Complete 100 quest workouts', xp: 2500 },
+      { id: 'workout_150', name: 'Gladiator', icon: '🏛️', desc: 'Complete 150 quest workouts', xp: 4000 },
+      { id: 'workout_200', name: 'Biceps Spartan', icon: '⚡', desc: 'Complete 200 quest workouts', xp: 6000 },
+      { id: 'workout_365', name: '365 Days of Iron', icon: '🔱', desc: 'Complete 365 quest workouts', xp: 12000 },
+      { id: 'workout_1000', name: 'Gym Rat Genesis', icon: '🌌', desc: 'Complete 1,000 quest workouts', xp: 50000 },
+
+      // 16-30: Cumulative Tonnage Volume
+      { id: 'vol_1k', name: 'First Ton', icon: '📦', desc: 'Lift 1,000 lbs total volume', xp: 50 },
+      { id: 'vol_5k', name: 'Light Weight', icon: '📦', desc: 'Lift 5,000 lbs total volume', xp: 75 },
+      { id: 'vol_10k', name: 'Warmup Tonnage', icon: '🚚', desc: 'Lift 10,000 lbs total volume', xp: 150 },
+      { id: 'vol_25k', name: 'Heavy Load', icon: '🚚', desc: 'Lift 25,000 lbs total volume', xp: 250 },
+      { id: 'vol_50k', name: 'Freight Train', icon: '🚂', desc: 'Lift 50,000 lbs total volume', xp: 400 },
+      { id: 'vol_100k', name: 'Heavy Hauler', icon: '🚛', desc: 'Lift 100,000 lbs total volume', xp: 600 },
+      { id: 'vol_250k', name: 'Quarter Million', icon: '💥', desc: 'Lift 250,000 lbs total volume', xp: 1200 },
+      { id: 'vol_500k', name: 'Half Million', icon: '🌋', desc: 'Lift 500,000 lbs total volume', xp: 2000 },
+      { id: 'vol_1m', name: 'Million Pounder', icon: '🌠', desc: 'Lift 1,000,000 lbs total volume', xp: 3500 },
+      { id: 'vol_2.5m', name: 'Mountain Mover', icon: '🏔️', desc: 'Lift 2,500,000 lbs total volume', xp: 7500 },
+      { id: 'vol_5m', name: 'Planet Lifter', icon: '🪐', desc: 'Lift 5,000,000 lbs total volume', xp: 15000 },
+      { id: 'vol_10m', name: 'Tectonic Lifter', icon: '🌋', desc: 'Lift 10,000,000 lbs total volume', xp: 30000 },
+      { id: 'vol_25m', name: 'Gravitational Force', icon: '🌌', desc: 'Lift 25,000,000 lbs total volume', xp: 50000 },
+      { id: 'vol_50m', name: 'Star Crusher', icon: '⭐', desc: 'Lift 50,000,000 lbs total volume', xp: 75000 },
+      { id: 'vol_100m', name: 'Cosmic Mass', icon: '☀️', desc: 'Lift 100,000,000 lbs total volume', xp: 100000 },
+
+      // 31-45: Completed Sets Count
+      { id: 'sets_10', name: 'Set Starter', icon: '📊', desc: 'Complete 10 sets', xp: 50 },
+      { id: 'sets_25', name: 'Set Builder', icon: '📊', desc: 'Complete 25 sets', xp: 75 },
+      { id: 'sets_50', name: 'Getting Started', icon: '📈', desc: 'Complete 50 sets', xp: 120 },
+      { id: 'sets_100', name: 'Triple Digit Sets', icon: '📈', desc: 'Complete 100 sets', xp: 250 },
+      { id: 'sets_250', name: 'Set Machine', icon: '⚡', desc: 'Complete 250 sets', xp: 500 },
+      { id: 'sets_500', name: 'Set Specialist', icon: '⚡', desc: 'Complete 500 sets', xp: 1000 },
+      { id: 'sets_750', name: 'Repetition Master', icon: '🎯', desc: 'Complete 750 sets', xp: 1500 },
+      { id: 'sets_1000', name: 'Thousand Set Club', icon: '🎯', desc: 'Complete 1,000 sets', xp: 2200 },
+      { id: 'sets_1500', name: 'Volume Archmage', icon: '🧙', desc: 'Complete 1,500 sets', xp: 3500 },
+      { id: 'sets_2500', name: 'Volume Fiend', icon: '🔥', desc: 'Complete 2,500 sets', xp: 6000 },
+      { id: 'sets_4000', name: 'Set Overlord', icon: '👹', desc: 'Complete 4,000 sets', xp: 10000 },
+      { id: 'sets_6000', name: 'Set Titan', icon: '🗿', desc: 'Complete 6,000 sets', xp: 16000 },
+      { id: 'sets_8000', name: 'Set Immortal', icon: '⚜️', desc: 'Complete 8,000 sets', xp: 22000 },
+      { id: 'sets_10000', name: '10k Set Club', icon: '👑', desc: 'Complete 10,000 sets', xp: 30000 },
+      { id: 'sets_20000', name: 'Infinite Reps', icon: '♾️', desc: 'Complete 20,000 sets', xp: 60000 },
+
+      // 46-60: Muscle Group Specialization
+      { id: 'back_20', name: 'Lats of Steel', icon: '🦇', desc: 'Log 20 back sets', xp: 300 },
+      { id: 'back_50', name: 'Chalk Cloud', icon: '☁️', desc: 'Log 50 back sets', xp: 800 },
+      { id: 'back_150', name: 'Wide Back Master', icon: '🛡️', desc: 'Log 150 back sets', xp: 2500 },
+      { id: 'chest_10', name: 'Pec Deck Pro', icon: '🦅', desc: 'Log 10 chest sets', xp: 200 },
+      { id: 'chest_50', name: 'Chest Press Champion', icon: '🏋️', desc: 'Log 50 chest sets', xp: 800 },
+      { id: 'chest_150', name: 'Armor Plated Chest', icon: '🧱', desc: 'Log 150 chest sets', xp: 2500 },
+      { id: 'legs_25', name: 'Quad Commander', icon: '🦵', desc: 'Log 25 leg sets', xp: 400 },
+      { id: 'legs_100', name: 'Quarter Squat Denier', icon: '📏', desc: 'Log 100 leg sets', xp: 1200 },
+      { id: 'legs_250', name: 'Leg Day Sovereign', icon: '👑', desc: 'Log 250 leg sets', xp: 4000 },
+      { id: 'arms_30', name: 'Sleeve Splitter', icon: '💪', desc: 'Log 30 arm sets', xp: 350 },
+      { id: 'arms_100', name: 'Gun Show Director', icon: '🎪', desc: 'Log 100 arm sets', xp: 1500 },
+      { id: 'shoulders_30', name: 'Boulder Shoulders', icon: '🪨', desc: 'Log 30 shoulder sets', xp: 350 },
+      { id: 'shoulders_100', name: '3D Delts', icon: '📐', desc: 'Log 100 shoulder sets', xp: 1500 },
+      { id: 'core_30', name: 'Abs of Granite', icon: '🧱', desc: 'Log 30 core sets', xp: 350 },
+      { id: 'core_100', name: 'Core Commander', icon: '🛡️', desc: 'Log 100 core sets', xp: 1500 },
+
+      // 61-75: Cardio & Endure
+      { id: 'cardio_1', name: 'First Steps', icon: '🏃', desc: 'Log 1 cardio session', xp: 50 },
+      { id: 'cardio_5', name: 'Warmup Runner', icon: '🏃', desc: 'Log 5 cardio sessions', xp: 150 },
+      { id: 'cardio_10', name: 'Cardio Starter', icon: '🫀', desc: 'Log 10 cardio sessions', xp: 300 },
+      { id: 'cardio_20', name: 'Sweat Collector', icon: '💦', desc: 'Log 20 cardio sessions', xp: 600 },
+      { id: 'cardio_35', name: 'Endurance Warrior', icon: '🚴', desc: 'Log 35 cardio sessions', xp: 1000 },
+      { id: 'cardio_50', name: 'Stamina Engine', icon: '🫀', desc: 'Log 50 cardio sessions', xp: 1500 },
+      { id: 'cardio_75', name: 'Cardio Connoisseur', icon: '👟', desc: 'Log 75 cardio sessions', xp: 2500 },
+      { id: 'cardio_100', name: 'Century Runner', icon: '🥇', desc: 'Log 100 cardio sessions', xp: 3500 },
+      { id: 'cardio_150', name: 'Iron Lungs', icon: '🫁', desc: 'Log 150 cardio sessions', xp: 5500 },
+      { id: 'cardio_200', name: 'Marathon Machine', icon: '🚴', desc: 'Log 200 cardio sessions', xp: 7500 },
+      { id: 'cardio_300', name: 'Ultra Endurance', icon: '⚡', desc: 'Log 300 cardio sessions', xp: 12000 },
+      { id: 'cardio_500', name: 'Perpetual Motion', icon: '🌌', desc: 'Log 500 cardio sessions', xp: 25000 },
+      { id: 'iso_5', name: 'Static Hold Novice', icon: '🧘', desc: 'Log 5 isometric sets', xp: 150 },
+      { id: 'iso_15', name: 'Tendon Builder', icon: '🧘', desc: 'Log 15 isometric sets', xp: 500 },
+      { id: 'tendon_god', name: 'Tendon Isometrics God', icon: '🧘', desc: 'Log 30 isometric hold sets', xp: 1000 },
+
+      // 76-88: Obscure Gym Culture & Tools
+      { id: 'plate_math', name: 'Plate Math Wizard', icon: '🧮', desc: 'Open Barbell Plate Calculator 5 times', xp: 100 },
+      { id: 'plate_math_20', name: 'Calculator Addict', icon: '🧮', desc: 'Open Plate Calculator 20 times', xp: 400 },
+      { id: 'fountain_queue', name: 'Water Fountain Queue', icon: '🚰', desc: 'Use rest timer 20 times', xp: 150 },
+      { id: 'fountain_queue_50', name: 'Hydration Hero', icon: '🚰', desc: 'Use rest timer 50 times', xp: 500 },
+      { id: 're-rack', name: 'Re-racked My Weights', icon: '🧼', desc: 'Complete a quest workout with zero skipped sets', xp: 150 },
+      { id: 'curls_in_rack', name: 'Curls in the Squat Rack', icon: '😈', desc: 'Log Bicep Curls on a Leg Day template', xp: 250 },
+      { id: 'skipped_leg_day', name: 'Never Skipped Legs', icon: '🦵', desc: 'Log 20 leg workouts', xp: 1500 },
+      { id: 'calf_genetics', name: 'Calf Genetic Crusher', icon: '🐮', desc: 'Log 50 total calf raise sets', xp: 1200 },
+      { id: 'calf_genetics_100', name: 'Calf God', icon: '🐮', desc: 'Log 100 total calf raise sets', xp: 3000 },
+      { id: 'mirror_selfie', name: 'Lighting Specialist', icon: '🪞', desc: 'Complete 5 chest quest workouts', xp: 300 },
+      { id: 'custom_ex_1', name: 'Exercise Architect', icon: '🛠️', desc: 'Create 1 custom exercise', xp: 100 },
+      { id: 'custom_ex_5', name: 'Workout Designer', icon: '🛠️', desc: 'Create 5 custom exercises', xp: 400 },
+      { id: 'backup_user', name: 'Data Guardian', icon: '💾', desc: 'Export JSON data backup', xp: 200 },
+
+      // 89-100: Level Milestones
+      { id: 'lvl_2', name: 'First Level Up', icon: '🟢', desc: 'Reach Level 2 Rank', xp: 100 },
+      { id: 'lvl_5', name: 'Rising Star', icon: '🟢', desc: 'Reach Level 5 Rank', xp: 300 },
+      { id: 'lvl_10', name: 'Double Digits', icon: '🔟', desc: 'Reach Level 10 Rank', xp: 1000 },
+      { id: 'lvl_15', name: 'Adept Adventurer', icon: '🥉', desc: 'Reach Level 15 Rank', xp: 2000 },
+      { id: 'lvl_20', name: 'Veteran Rank', icon: '🥉', desc: 'Reach Level 20 Rank', xp: 3500 },
+      { id: 'lvl_25', name: 'Quarter Century', icon: '🥉', desc: 'Reach Level 25 Rank', xp: 5000 },
+      { id: 'lvl_30', name: 'Elite Warrior', icon: '🥈', desc: 'Reach Level 30 Rank', xp: 8000 },
+      { id: 'lvl_40', name: 'Master Lifter', icon: '🥈', desc: 'Reach Level 40 Rank', xp: 13000 },
+      { id: 'lvl_50', name: 'Halfway to Legend', icon: '🥈', desc: 'Reach Level 50 Rank', xp: 20000 },
+      { id: 'lvl_75', name: 'Grandmaster Rank', icon: '🥇', desc: 'Reach Level 75 Rank', xp: 50000 },
+      { id: 'lvl_90', name: 'Near Mythic', icon: '🥇', desc: 'Reach Level 90 Rank', xp: 75000 },
+      { id: 'lvl_100', name: 'Century Legend', icon: '👑', desc: 'Reach Level 100 Rank', xp: 100000 }
+    ];
+
+    function safeJSON(key, fallback) { try { const raw=localStorage.getItem(key); return raw===null?fallback:JSON.parse(raw); } catch(e) { return fallback; } }
+    function safeArray(key, fallback) { const value=safeJSON(key,fallback); return Array.isArray(value)?value:fallback; }
+    function safeInt(key, fallback=0) { const value=Number.parseInt(localStorage.getItem(key),10); return Number.isFinite(value)&&value>=0?value:fallback; }
+    let exercises = safeArray('fitlog_exercises', defaultExercises);
+    let templates = safeArray('fitlog_templates', defaultTemplates);
+    let workoutLogs = safeArray('fitlog_logs', []);
+    let autoRestEnabled = safeJSON('fitlog_auto_timer', true); if (typeof autoRestEnabled !== 'boolean') autoRestEnabled=true;
+    let defaultRestTime = safeInt('fitlog_rest_time', 60) || 60;
+    let userXP = safeInt('fitlog_xp');
+    let unlockedBadges = safeArray('fitlog_badges', []);
+    let plateMathCount = safeInt('fitlog_plate_math_count');
+    let restTimerCount = safeInt('fitlog_timer_count');
+    let customExCount = safeInt('fitlog_custom_ex_count');
+    let backupExportCount = safeInt('fitlog_backup_count');
+
+    let currentWorkout = null;
+    let workoutTimerInterval = null;
+    let restTimerInterval = null;
+    let remainingRestSeconds = 0;
+    let currentDate = new Date();
+    let chartInstance = null;
+
+    function playChime() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.6);
+      } catch(e) {}
+    }
+
+    const dailyBonusPool = [
+      { id:'core_2', title:'Core Finisher', description:'Complete 2 core working sets today.', target:2, xp:25, type:'sets', muscle:'core' },
+      { id:'accessory_2', title:'Accessory Focus', description:'Complete 2 arm or shoulder working sets today.', target:2, xp:25, type:'sets', muscles:['arms','shoulders'] },
+      { id:'back_3', title:'Back Builder', description:'Complete 3 back working sets today.', target:3, xp:30, type:'sets', muscle:'back' },
+      { id:'legs_3', title:'Lower-Body Focus', description:'Complete 3 leg working sets today.', target:3, xp:30, type:'sets', muscle:'legs' },
+      { id:'rpe_5', title:'Precision Logging', description:'Record RPE for 5 completed working sets today.', target:5, xp:20, type:'rpe' },
+      { id:'valid_5', title:'Complete Log', description:'Complete 5 fully logged working sets today.', target:5, xp:20, type:'valid' },
+      { id:'cardio_10', title:'Easy Cardio', description:'Log 10 minutes of cardio today.', target:10, xp:20, type:'cardioMinutes' },
+      { id:'cardio_20', title:'Cardio Momentum', description:'Log 20 minutes of cardio today.', target:20, xp:35, type:'cardioMinutes' },
+      { id:'mobility_5', title:'Five-Minute Reset', description:'Log 5 minutes of mobility using a time-based Core exercise.', target:5, xp:10, type:'mobilityMinutes' },
+      { id:'least_muscle', title:'Balanced Builder', description:'Complete 2 sets for your least-trained muscle group this week.', target:2, xp:30, type:'leastMuscle' },
+      { id:'workout_today', title:'Consistency Bonus', description:'Finish one valid workout today.', target:1, xp:20, type:'workout' }
+    ];
+
+    const weeklyBonusPool = [
+      { id:'weekly_target', title:'Weekly Target', description:'Complete 3 valid workouts this week.', target:3, xp:100, type:'weeklyWorkouts' },
+      { id:'balanced_week', title:'Balanced Week', description:'Reach 8 completed sets for three muscle groups this week.', target:3, xp:75, type:'weeklyBalanced' },
+      { id:'cardio_week', title:'Cardio Commitment', description:'Log 60 minutes of cardio this week.', target:60, xp:75, type:'weeklyCardio' }
+    ];
+
+    function localDateKey() { return new Date().toLocaleDateString('en-CA'); }
+    function weekKey() { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.toLocaleDateString('en-CA'); }
+    function getDailyBonus() {
+      const saved = safeJSON('fitlog_daily_bonus', null);
+      if (saved && saved.date === localDateKey()) return saved;
+      const seed = Array.from(localDateKey()).reduce((n, c) => n + c.charCodeAt(0), 0);
+      const bonus = { ...dailyBonusPool[seed % dailyBonusPool.length], date: localDateKey(), swapped:false, awarded:false };
+      localStorage.setItem('fitlog_daily_bonus', JSON.stringify(bonus));
+      return bonus;
+    }
+    function getWeekStartDate() { const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - ((d.getDay()+6)%7)); return d; }
+    function thisWeekLogs() { const start = getWeekStartDate(); return workoutLogs.filter(log => new Date(`${log.date}T12:00:00`) >= start); }
+    function todayLogs() { const today = localDateKey(); return workoutLogs.filter(log => log.date === today); }
+    function completedEntries(logs) { return logs.flatMap(log => (log.exercises || []).flatMap(ex => (ex.sets || []).filter(s => s.done).map(s => ({...s, exercise:ex})))); }
+    function cardioMinutes(logs) { return completedEntries(logs).filter(s => s.exercise.type === 'time' && (s.exercise.muscle || '').toLowerCase() === 'cardio').reduce((n,s) => n + (parseFloat(s.val1) || 0), 0); }
+    function getMuscleCounts(logs) { const counts={chest:0,back:0,legs:0,shoulders:0,arms:0,core:0,cardio:0}; completedEntries(logs).forEach(s=>{const m=(s.exercise.muscle||'').toLowerCase(); if(counts[m]!==undefined) counts[m]++;}); return counts; }
+    function dailyBonusProgress(bonus) {
+      const entries = completedEntries(todayLogs());
+      if (bonus.type === 'workout') return todayLogs().length;
+      if (bonus.type === 'cardioMinutes') return cardioMinutes(todayLogs());
+      if (bonus.type === 'mobilityMinutes') return entries.filter(s => s.exercise.type === 'time' && (s.exercise.muscle || '').toLowerCase() === 'core').reduce((n,s) => n + (parseFloat(s.val1)||0), 0);
+      if (bonus.type === 'rpe') return entries.filter(s => parseFloat(s.rpe) > 0).length;
+      if (bonus.type === 'valid') return entries.filter(s => parseFloat(s.val1)>0 && parseFloat(s.val2)>0).length;
+      if (bonus.type === 'leastMuscle') { const all=getMuscleCounts(thisWeekLogs()); const min=Math.min(...Object.values(all)); const least=Object.keys(all).filter(k=>all[k]===min && k!=='cardio'); return entries.filter(s=>least.includes((s.exercise.muscle||'').toLowerCase())).length; }
+      if (bonus.type === 'sets') return entries.filter(s => { const m=(s.exercise.muscle||'').toLowerCase(); return bonus.muscle ? m===bonus.muscle : bonus.muscles.includes(m); }).length;
+      return 0;
+    }
+    function awardDailyBonusIfComplete() {
+      const bonus=getDailyBonus(), progress=dailyBonusProgress(bonus);
+      if (!bonus.awarded && progress >= bonus.target) { bonus.awarded=true; localStorage.setItem('fitlog_daily_bonus',JSON.stringify(bonus)); addXP(bonus.xp); setTimeout(()=>alert(`Optional Bonus Complete!\n${bonus.title} (+${bonus.xp} XP)`),0); }
+      renderDailyBonus();
+    }
+    function renderDailyBonus() {
+      const card=document.getElementById('daily-bonus-card'); if(!card) return;
+      const bonus=getDailyBonus(), progress=Math.min(dailyBonusProgress(bonus),bonus.target);
+      document.getElementById('daily-bonus-title').innerText=bonus.awarded ? `${bonus.title} ✓` : bonus.title;
+      document.getElementById('daily-bonus-description').innerText=bonus.description;
+      document.getElementById('daily-bonus-xp').innerText=`+${bonus.xp} XP`;
+      document.getElementById('daily-bonus-progress').innerText=`${progress} / ${bonus.target}${bonus.awarded ? ' · Complete' : ''}`;
+      document.getElementById('daily-bonus-progress-bar').style.width=`${Math.min(100,(progress/bonus.target)*100)}%`;
+    }
+    function swapDailyBonus() {
+      const current=getDailyBonus(); if(current.swapped) return alert('You have already swapped today’s optional bonus.');
+      const options=dailyBonusPool.filter(b=>b.id!==current.id); const next=options[(new Date().getDate()+current.id.length)%options.length];
+      localStorage.setItem('fitlog_daily_bonus',JSON.stringify({...next,date:localDateKey(),swapped:true,awarded:false})); renderDailyBonus();
+    }
+
+
+    function getWeeklyBonus() {
+      const saved=safeJSON('fitlog_weekly_bonus',null); if(saved&&saved.week===weekKey()) return saved;
+      const pool=weeklyBonusPool; const bonus={...pool[(new Date().getWeek?.()||new Date().getDate())%pool.length],week:weekKey(),awarded:false}; localStorage.setItem('fitlog_weekly_bonus',JSON.stringify(bonus)); return bonus;
+    }
+    function weeklyBonusProgress(bonus) { const logs=thisWeekLogs(); if(bonus.type==='weeklyWorkouts') return logs.length; if(bonus.type==='weeklyCardio') return cardioMinutes(logs); if(bonus.type==='weeklyBalanced') return Object.values(getMuscleCounts(logs)).filter(n=>n>=8).length; return 0; }
+    function awardWeeklyBonusIfComplete() { const b=getWeeklyBonus(); if(!b.awarded&&weeklyBonusProgress(b)>=b.target){b.awarded=true;localStorage.setItem('fitlog_weekly_bonus',JSON.stringify(b));addXP(b.xp);setTimeout(()=>alert(`Weekly Challenge Complete!\n${b.title} (+${b.xp} XP)`),0);} }
+
+    function addXP(amount) {
+      userXP += amount;
+      localStorage.setItem('fitlog_xp', userXP);
+      updateRPGDisplay();
+      checkBadges();
+    }
+
+    function getTrainingStats() {
+      const totalSets = workoutLogs.reduce((sum, log) => sum + (log.exercises || []).reduce((n, ex) => n + (ex.sets || []).filter(s => s.done).length, 0), 0);
+      const totalVolume = workoutLogs.reduce((sum, log) => sum + (log.exercises || []).reduce((n, ex) => n + (ex.sets || []).filter(s => s.done).reduce((v, s) => v + (parseFloat(s.val1) || 0) * (parseFloat(s.val2) || 0), 0), 0), 0);
+      return { totalSets, totalVolume };
+    }
+
+    function renderProgressionGuide() {
+      const container = document.getElementById('progression-guide-container');
+      if (!container) return;
+
+      const info = calculateLevelAndXP(userXP);
+      const xpForNext5 = [1,2,3,4,5].map(i => getRequiredXPForLevel(info.level + i) - getRequiredXPForLevel(info.level + i - 1));
+
+      // Build the rank-path list from rankTiers: [maxLevel, tierName] pairs.
+      let tierStart = 1;
+      const rankPathHTML = rankTiers.map(([maxLevel, tierName]) => {
+        const rangeLabel = maxLevel === Infinity ? `${tierStart}+` : `${tierStart}–${maxLevel}`;
+        const isCurrent = info.level >= tierStart && info.level <= maxLevel;
+        const html = `<span${isCurrent ? ' style="border:1px solid #4bdfa7;color:#9dffce;"' : ''}>${tierName} <span style="opacity:.65">(Lvl ${rangeLabel})</span></span>`;
+        tierStart = maxLevel + 1;
+        return html;
+      }).join('');
+
+      container.innerHTML = `
+        <h3>📖 How Ranks & XP Work</h3>
+
+        <h4>Where XP comes from</h4>
+        <div class="guide-grid">
+          <div><b>Complete a set</b><span>+15 XP</span></div>
+          <div><b>Finish a quest (workout)</b><span>+150 XP</span></div>
+          <div><b>Bonus XP perks</b><span>+10 to +50 XP</span></div>
+          <div><b>Daily bonus challenge</b><span>varies</span></div>
+          <div><b>Weekly challenge</b><span>varies</span></div>
+          <div><b>Achievements/badges</b><span>50–50,000 XP</span></div>
+        </div>
+        <p style="font-size:0.75rem; color:var(--text-muted);">
+          Bonus XP perks are the modifiers you tap on during an active workout (New PR, High Intensity, Early Bird, etc.) —
+          they're self-reported and stack on top of the flat +150 XP quest-completion reward when you finish.
+        </p>
+
+        <details open>
+          <summary>How leveling is scaled</summary>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
+            Every level requires more total XP than the last — the cost per level rises by 15 XP each time you level up,
+            so early levels come quickly while higher levels demand a much longer grind. Concretely, the total XP needed
+            to reach a level equals <code>150 × (level − 1) + 7.5 × (level − 1) × (level − 2)</code>.
+          </p>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
+            At your current level (${info.level}), your next 5 level-ups cost:
+            ${xpForNext5.map((x,i) => `<b style="color:#eaf0ff;">Lvl ${info.level+i+1}: ${x.toLocaleString()} XP</b>`).join(' · ')}
+          </p>
+        </details>
+
+        <details>
+          <summary>Rank tiers (your title changes as you level)</summary>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">
+            Your on-screen title (e.g. "${info.title}") combines a tier name with your position inside that tier.
+            Tiers get shorter near the start and stretch out dramatically at the top, so the rarest titles take
+            serious dedication to earn.
+          </p>
+          <div class="rank-path">${rankPathHTML}</div>
+        </details>
+      `;
+    }
+
+    function updateVisibleRank() {
+      const info = calculateLevelAndXP(userXP);
+      const stats = getTrainingStats();
+      const name = document.getElementById('rank-visible-name');
+      const lvl = document.getElementById('rank-visible-level');
+      const xp = document.getElementById('rank-visible-xp');
+      const bar = document.getElementById('rank-visible-bar');
+      const next = document.getElementById('rank-visible-next');
+      if (name) name.innerText = info.title;
+      if (lvl) lvl.innerText = `Level ${info.level}`;
+      if (xp) xp.innerText = `${userXP.toLocaleString()} XP`;
+      if (bar) bar.style.width = `${info.progressPct}%`;
+      if (next) next.innerText = `${Math.max(0, info.nextXpTotal - userXP).toLocaleString()} XP to Level ${info.level + 1} · ${stats.totalSets.toLocaleString()} lifetime sets`;
+    }
+
+    function updateRPGDisplay() {
+      const info = calculateLevelAndXP(userXP);
+      
+      const titleEl = document.getElementById('rpg-rank-title');
+      const lvlEl = document.getElementById('rpg-level-tag');
+      const fillEl = document.getElementById('xp-bar-fill');
+      const textEl = document.getElementById('xp-text-display');
+
+      if(titleEl) titleEl.innerText = info.title;
+      if(lvlEl) lvlEl.innerText = `Lvl ${info.level}`;
+      if(fillEl) fillEl.style.width = `${info.progressPct}%`;
+      if(textEl) textEl.innerText = `${userXP.toLocaleString()} / ${info.nextXpTotal.toLocaleString()} XP`;
+
+      const titleElTab = document.getElementById('rpg-rank-title-tab');
+      const lvlElTab = document.getElementById('rpg-level-tag-tab');
+      const fillElTab = document.getElementById('xp-bar-fill-tab');
+      const textElTab = document.getElementById('xp-text-display-tab');
+
+      if(titleElTab) titleElTab.innerText = info.title;
+      if(lvlElTab) lvlElTab.innerText = `Lvl ${info.level}`;
+      if(fillElTab) fillElTab.style.width = `${info.progressPct}%`;
+      if(textElTab) textElTab.innerText = `${userXP.toLocaleString()} / ${info.nextXpTotal.toLocaleString()} XP`;
+
+      const countEl = document.getElementById('achievement-unlocked-count');
+      if(countEl) countEl.innerText = `${unlockedBadges.length} / ${allBadges.length}`;
+
+      renderBadges();
+      updateVisibleRank();
+      renderProgressionGuide();
+    }
+
+    function checkBadges() {
+      const totalWorkouts = workoutLogs.length;
+      let totalSets = 0;
+      let totalVolume = 0;
+      let cardioSessions = 0;
+      let legWorkouts = 0;
+      let calfSets = 0;
+      let isoSets = 0;
+      let backSets = 0;
+      let chestSets = 0;
+      let legSets = 0;
+      let armSets = 0;
+      let shoulderSets = 0;
+      let coreSets = 0;
+      let chestWorkouts = 0;
+
+      const unlock = (id) => {
+        if(!unlockedBadges.includes(id)) {
+          unlockedBadges.push(id);
+          localStorage.setItem('fitlog_badges', JSON.stringify(unlockedBadges));
+          const badgeObj = allBadges.find(b => b.id === id);
+          if(badgeObj) {
+            alert(`🏆 ACHIEVEMENT UNLOCKED: ${badgeObj.name}!\n${badgeObj.desc} (+${badgeObj.xp} XP)`);
+            addXP(badgeObj.xp);
+          }
+        }
+      };
+
+      workoutLogs.forEach(log => {
+        let isLegSession = false;
+        let isChestSession = false;
+        let hasCurls = false;
+
+        log.exercises.forEach(ex => {
+          const exMuscle = (ex.muscle || '').toLowerCase();
+          const exName = (ex.name || '').toLowerCase();
+
+          if (exMuscle === 'legs') isLegSession = true;
+          if (exMuscle === 'chest') isChestSession = true;
+          if (exName.includes('curl')) hasCurls = true;
+
+          ex.sets.forEach(s => {
+            if(s.done) {
+              totalSets++;
+              totalVolume += (parseFloat(s.val1) || 0) * (parseFloat(s.val2) || 0);
+              if (exName.includes('calf')) calfSets++;
+              if (ex.type === 'time') isoSets++;
+              if (exMuscle === 'back') backSets++;
+              if (exMuscle === 'chest') chestSets++;
+              if (exMuscle === 'legs') legSets++;
+              if (exMuscle === 'arms') armSets++;
+              if (exMuscle === 'shoulders') shoulderSets++;
+              if (exMuscle === 'core') coreSets++;
+            }
+          });
+
+          if(exName.includes('cardio') || exMuscle === 'cardio') {
+            cardioSessions++;
+          }
+        });
+
+        if (isLegSession) legWorkouts++;
+        if (isChestSession) chestWorkouts++;
+        if (isLegSession && hasCurls) unlock('curls_in_rack');
+      });
+
+      const currentLvl = calculateLevelAndXP(userXP).level;
+
+      // Workouts
+      if(totalWorkouts >= 1) unlock('first_workout');
+      if(totalWorkouts >= 3) unlock('workout_3');
+      if(totalWorkouts >= 5) unlock('workout_5');
+      if(totalWorkouts >= 7) unlock('workout_7');
+      if(totalWorkouts >= 10) unlock('workout_10');
+      if(totalWorkouts >= 15) unlock('workout_15');
+      if(totalWorkouts >= 20) unlock('workout_20');
+      if(totalWorkouts >= 30) unlock('workout_30');
+      if(totalWorkouts >= 50) unlock('workout_50');
+      if(totalWorkouts >= 75) unlock('workout_75');
+      if(totalWorkouts >= 100) unlock('workout_100');
+      if(totalWorkouts >= 150) unlock('workout_150');
+      if(totalWorkouts >= 200) unlock('workout_200');
+      if(totalWorkouts >= 365) unlock('workout_365');
+      if(totalWorkouts >= 1000) unlock('workout_1000');
+
+      // Volume
+      if(totalVolume >= 1000) unlock('vol_1k');
+      if(totalVolume >= 5000) unlock('vol_5k');
+      if(totalVolume >= 10000) unlock('vol_10k');
+      if(totalVolume >= 25000) unlock('vol_25k');
+      if(totalVolume >= 50000) unlock('vol_50k');
+      if(totalVolume >= 100000) unlock('vol_100k');
+      if(totalVolume >= 250000) unlock('vol_250k');
+      if(totalVolume >= 500000) unlock('vol_500k');
+      if(totalVolume >= 1000000) unlock('vol_1m');
+      if(totalVolume >= 2500000) unlock('vol_2.5m');
+      if(totalVolume >= 5000000) unlock('vol_5m');
+      if(totalVolume >= 10000000) unlock('vol_10m');
+      if(totalVolume >= 25000000) unlock('vol_25m');
+      if(totalVolume >= 50000000) unlock('vol_50m');
+      if(totalVolume >= 100000000) unlock('vol_100m');
+
+      // Sets
+      if(totalSets >= 10) unlock('sets_10');
+      if(totalSets >= 25) unlock('sets_25');
+      if(totalSets >= 50) unlock('sets_50');
+      if(totalSets >= 100) unlock('sets_100');
+      if(totalSets >= 250) unlock('sets_250');
+      if(totalSets >= 500) unlock('sets_500');
+      if(totalSets >= 750) unlock('sets_750');
+      if(totalSets >= 1000) unlock('sets_1000');
+      if(totalSets >= 1500) unlock('sets_1500');
+      if(totalSets >= 2500) unlock('sets_2500');
+      if(totalSets >= 4000) unlock('sets_4000');
+      if(totalSets >= 6000) unlock('sets_6000');
+      if(totalSets >= 8000) unlock('sets_8000');
+      if(totalSets >= 10000) unlock('sets_10000');
+      if(totalSets >= 20000) unlock('sets_20000');
+
+      // Muscle Specific
+      if(backSets >= 20) unlock('back_20');
+      if(backSets >= 50) unlock('back_50');
+      if(backSets >= 150) unlock('back_150');
+      if(chestSets >= 10) unlock('chest_10');
+      if(chestSets >= 50) unlock('chest_50');
+      if(chestSets >= 150) unlock('chest_150');
+      if(legSets >= 25) unlock('legs_25');
+      if(legSets >= 100) unlock('legs_100');
+      if(legSets >= 250) unlock('legs_250');
+      if(armSets >= 30) unlock('arms_30');
+      if(armSets >= 100) unlock('arms_100');
+      if(shoulderSets >= 30) unlock('shoulders_30');
+      if(shoulderSets >= 100) unlock('shoulders_100');
+      if(coreSets >= 30) unlock('core_30');
+      if(coreSets >= 100) unlock('core_100');
+
+      // Cardio & Isometrics
+      if(cardioSessions >= 1) unlock('cardio_1');
+      if(cardioSessions >= 5) unlock('cardio_5');
+      if(cardioSessions >= 10) unlock('cardio_10');
+      if(cardioSessions >= 20) unlock('cardio_20');
+      if(cardioSessions >= 35) unlock('cardio_35');
+      if(cardioSessions >= 50) unlock('cardio_50');
+      if(cardioSessions >= 75) unlock('cardio_75');
+      if(cardioSessions >= 100) unlock('cardio_100');
+      if(cardioSessions >= 150) unlock('cardio_150');
+      if(cardioSessions >= 200) unlock('cardio_200');
+      if(cardioSessions >= 300) unlock('cardio_300');
+      if(cardioSessions >= 500) unlock('cardio_500');
+      if(isoSets >= 5) unlock('iso_5');
+      if(isoSets >= 15) unlock('iso_15');
+      if(isoSets >= 30) unlock('tendon_god');
+
+      // Tools & Obscure
+      if(plateMathCount >= 5) unlock('plate_math');
+      if(plateMathCount >= 20) unlock('plate_math_20');
+      if(restTimerCount >= 20) unlock('fountain_queue');
+      if(restTimerCount >= 50) unlock('fountain_queue_50');
+      if(legWorkouts >= 20) unlock('skipped_leg_day');
+      if(calfSets >= 50) unlock('calf_genetics');
+      if(calfSets >= 100) unlock('calf_genetics_100');
+      if(chestWorkouts >= 5) unlock('mirror_selfie');
+      if(customExCount >= 1) unlock('custom_ex_1');
+      if(customExCount >= 5) unlock('custom_ex_5');
+      if(backupExportCount >= 1) unlock('backup_user');
+
+      // Level Ranks
+      if(currentLvl >= 2) unlock('lvl_2');
+      if(currentLvl >= 5) unlock('lvl_5');
+      if(currentLvl >= 10) unlock('lvl_10');
+      if(currentLvl >= 15) unlock('lvl_15');
+      if(currentLvl >= 20) unlock('lvl_20');
+      if(currentLvl >= 25) unlock('lvl_25');
+      if(currentLvl >= 30) unlock('lvl_30');
+      if(currentLvl >= 40) unlock('lvl_40');
+      if(currentLvl >= 50) unlock('lvl_50');
+      if(currentLvl >= 75) unlock('lvl_75');
+      if(currentLvl >= 90) unlock('lvl_90');
+      if(currentLvl >= 100) unlock('lvl_100');
+
+      renderBadges();
+    }
+
+    function renderBadges() {
+      const container = document.getElementById('badges-container');
+      if(!container) return;
+      container.innerHTML = '';
+
+      allBadges.forEach(b => {
+        const isUnlocked = unlockedBadges.includes(b.id);
+        const card = document.createElement('div');
+        card.className = `badge-card ${isUnlocked ? 'unlocked' : ''}`;
+        card.innerHTML = `
+          <div>
+            <div class="badge-icon">${b.icon}</div>
+            <div class="badge-name">${b.name}</div>
+            <div class="badge-desc">${b.desc}</div>
+          </div>
+          <div class="badge-xp">+${b.xp} XP</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderTemplates();
+      renderExerciseBank();
+      renderCalendar();
+      renderMuscleHeatmap();
+      updateRPGDisplay();
+      renderProgressionGuide();
+      registerServiceWorker();
+
+      const toggle = document.getElementById('auto-timer-toggle');
+      if(toggle) toggle.checked = autoRestEnabled;
+      const restSelect = document.getElementById('auto-timer-seconds');
+      if(restSelect) restSelect.value = defaultRestTime;
+    });
+
+    function switchView(viewName, btn) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`view-${viewName}`).classList.add('active');
+      btn.classList.add('active');
+      if(viewName === 'history') {
+        renderCalendar();
+        renderMuscleHeatmap();
+      } else if(viewName === 'rpg') {
+        updateRPGDisplay();
+        renderProgressionGuide();
+      }
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    function calc1RM(weight, reps) {
+      const w = parseFloat(weight);
+      const r = parseFloat(reps);
+      if(!w || !r) return 0;
+      if(r === 1) return Math.round(w);
+      return Math.round(w * (1 + r / 30));
+    }
+
+    function getPreviousPerformance(exerciseName) {
+      for (const log of workoutLogs) {
+        const foundEx = log.exercises.find(e => e.name === exerciseName);
+        if (foundEx && foundEx.sets.length > 0) {
+          const lastSet = foundEx.sets[0];
+          const setsSummary = foundEx.sets
+            .map((s, idx) => `S${idx + 1}: ${s.val1 || 0}×${s.val2 || 0}`)
+            .join(' | ');
+          
+          let targetText = "";
+          if(lastSet.val1 && lastSet.val2) {
+            targetText = `<br><strong style="color:var(--accent);">🎯 Target:</strong> ${parseFloat(lastSet.val1) + 5} lbs × ${lastSet.val2} reps or ${lastSet.val1} lbs × ${parseInt(lastSet.val2) + 1} reps`;
+          }
+
+          return {
+            summary: `${log.date}: ${setsSummary}${targetText}`,
+            rawSets: foundEx.sets
+          };
+        }
+      }
+      return { summary: 'No previous history recorded.', rawSets: null };
+    }
+
+    function startNewWorkout(templateName = "Custom Quest", initialExercises = []) {
+      currentWorkout = {
+        id: 'log_' + Date.now(),
+        date: new Date().toLocaleDateString('en-CA'),
+        elapsedSeconds: 0,
+        title: templateName,
+        selectedBonuses: [],
+        exercises: initialExercises.map(exName => {
+          const exObj = exercises.find(e => e.name === exName);
+          return {
+            name: exName,
+            type: exObj ? exObj.type : 'reps',
+            muscle: exObj ? exObj.muscle : 'Core',
+            sets: [{ val1: '', val2: '', done: false }]
+          };
+        })
+      };
+
+      clearInterval(workoutTimerInterval);
+      workoutTimerInterval = setInterval(() => {
+        if(currentWorkout) {
+          currentWorkout.elapsedSeconds++;
+          const timerEl = document.getElementById('live-timer');
+          if(timerEl) {
+            const m = Math.floor(currentWorkout.elapsedSeconds / 60).toString().padStart(2, '0');
+            const s = (currentWorkout.elapsedSeconds % 60).toString().padStart(2, '0');
+            timerEl.innerText = `${m}:${s}`;
+          }
+        }
+      }, 1000);
+
+      renderActiveWorkout();
+    }
+
+    function autoCopyLastSession(exIdx) {
+      const ex = currentWorkout.exercises[exIdx];
+      const prev = getPreviousPerformance(ex.name);
+      if(prev.rawSets && prev.rawSets.length > 0) {
+        ex.sets = prev.rawSets.map(s => ({ val1: s.val1, val2: s.val2, done: false }));
+        renderActiveWorkout();
+      } else {
+        alert("No previous session found for this exercise.");
+      }
+    }
+
+    function renderActiveWorkout() {
+      const container = document.getElementById('active-workout-container');
+      
+      let totalVolume = 0;
+      let completedSets = 0;
+      let totalSets = 0;
+
+      currentWorkout.exercises.forEach(ex => {
+        ex.sets.forEach(st => {
+          totalSets++;
+          if(st.done) {
+            completedSets++;
+            totalVolume += (parseFloat(st.val1) || 0) * (parseFloat(st.val2) || 0);
+          }
+        });
+      });
+
+      let html = `
+        <div class="card">
+          <input type="text" value="${currentWorkout.title}" onchange="currentWorkout.title=this.value" style="font-weight:bold; font-size:1.1rem; color:var(--gold);"/>
+          
+          <div class="live-stats-bar">
+            <div class="stat-item">
+              <div class="stat-value" id="live-timer">00:00</div>
+              <div class="stat-label">Timer</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">${completedSets}/${totalSets}</div>
+              <div class="stat-label">Sets</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">${totalVolume.toLocaleString()} <span style="font-size:0.7rem">lbs</span></div>
+              <div class="stat-label">Volume</div>
+            </div>
+          </div>
+
+          <div class="card bonus-xp-card">
+            <h3>⚡ Bonus XP Perks</h3>
+            <p>Tap any that apply to this session — stacked on top of your +150 XP quest reward.</p>
+            <div class="bonus-chip-grid">
+              ${workoutBonusXPOptions.map(opt => {
+                const isSelected = (currentWorkout.selectedBonuses || []).includes(opt.id);
+                return `
+                  <div class="bonus-chip${isSelected ? ' selected' : ''}" onclick="toggleWorkoutBonus('${opt.id}')">
+                    <span class="bonus-chip-icon">${opt.icon}</span>
+                    <span class="bonus-chip-text">
+                      <span class="bonus-chip-label">${opt.label}</span>
+                      <span class="bonus-chip-desc">${opt.desc}</span>
+                    </span>
+                    <span class="bonus-chip-xp">+${opt.xp}</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+            <div class="bonus-xp-total-row">
+              <span>Bonus XP selected</span>
+              <b>+${getWorkoutBonusXPTotal()} XP</b>
+            </div>
+          </div>
+
+          <div id="workout-exercises">
+      `;
+
+      currentWorkout.exercises.forEach((ex, exIdx) => {
+        const isReps = ex.type === 'reps';
+        const prevData = getPreviousPerformance(ex.name);
+
+        html += `
+          <div class="exercise-card">
+            <div class="exercise-header">
+              <h3 style="color:var(--text); font-weight:800;">${ex.name}</h3>
+              <div style="display:flex; gap:4px;">
+                <button class="btn btn-sm btn-secondary" onclick="autoCopyLastSession(${exIdx})">📋 Copy</button>
+                <button class="btn btn-sm btn-danger" onclick="removeExerciseFromWorkout(${exIdx})">✕</button>
+              </div>
+            </div>
+            <div class="prev-performance">📊 Last time: ${prevData.summary}</div>
+            
+            <div style="display:flex; gap:6px; margin-bottom:4px; font-size:0.72rem; color:var(--text-muted);">
+              <span style="width:32px; text-align:center;">SET</span>
+              <span style="flex:1; text-align:center;">${isReps ? 'WEIGHT' : 'MINUTES'}</span>
+              <span style="flex:1; text-align:center;">${isReps ? 'REPS' : 'DISTANCE'}</span>
+              <span style="width:55px; text-align:center;">1RM</span>
+              <span style="width:44px; text-align:center;">DONE</span>
+              <span style="width:29px;"></span>
+            </div>
+        `;
+
+        ex.sets.forEach((st, sIdx) => {
+          const isDone = st.done;
+          const e1rm = isReps ? calc1RM(st.val1, st.val2) : 0;
+
+          html += `
+            <div class="set-row ${isDone ? 'completed' : ''}">
+              <span class="set-num">${sIdx + 1}</span>
+              <input type="number" value="${st.val1}" placeholder="${isReps ? 'lbs' : 'min'}" inputmode="decimal" aria-label="Set ${sIdx + 1} ${isReps ? 'weight' : 'minutes'}" oninput="updateSetData(${exIdx}, ${sIdx}, 'val1', this.value)" />
+              <input type="number" value="${st.val2}" placeholder="${isReps ? 'reps' : 'mi'}" inputmode="decimal" aria-label="Set ${sIdx + 1} ${isReps ? 'reps' : 'distance'}" oninput="updateSetData(${exIdx}, ${sIdx}, 'val2', this.value)" />
+              <span class="set-1rm">${e1rm > 0 ? e1rm + ' lbs' : '-'}</span>
+              <button class="btn-check ${isDone ? 'completed' : ''}" onclick="toggleSetComplete(${exIdx}, ${sIdx})">✓</button>
+              <button class="btn btn-sm btn-danger" onclick="removeSet(${exIdx}, ${sIdx})" style="padding:4px 6px;">✕</button>
+            </div>
+          `;
+        });
+
+        html += `
+            <button class="btn btn-sm btn-secondary" onclick="addSet(${exIdx})" style="margin-top:8px; width:100%;">+ Add Set</button>
+          </div>
+        `;
+      });
+
+      html += `
+          </div>
+          <button class="btn btn-secondary" onclick="openExercisePicker()" style="margin-bottom:10px;">+ Add Exercise</button>
+          <button class="btn btn-accent" onclick="finishWorkout()">Finish Quest & Gain XP</button>
+          <button class="btn btn-danger" onclick="cancelWorkout()" style="margin-top:8px;">Abandon Quest</button>
+        </div>
+      `;
+      container.innerHTML = html;
+    }
+
+    function updateSetData(exIdx, sIdx, field, val) {
+      currentWorkout.exercises[exIdx].sets[sIdx][field] = val;
+      renderActiveWorkout();
+    }
+
+    function toggleSetComplete(exIdx, sIdx) {
+      const setObj = currentWorkout.exercises[exIdx].sets[sIdx];
+      const wasDone = setObj.done;
+      setObj.done = !setObj.done;
+
+      if (!wasDone && setObj.done) {
+        addXP(15);
+        if (autoRestEnabled) {
+          startTimer(defaultRestTime);
+        }
+      }
+
+      renderActiveWorkout();
+    }
+
+    function addSet(exIdx) {
+      currentWorkout.exercises[exIdx].sets.push({ val1: '', val2: '', done: false });
+      renderActiveWorkout();
+    }
+
+    function removeSet(exIdx, sIdx) {
+      currentWorkout.exercises[exIdx].sets.splice(sIdx, 1);
+      renderActiveWorkout();
+    }
+
+    function removeExerciseFromWorkout(exIdx) {
+      currentWorkout.exercises.splice(exIdx, 1);
+      renderActiveWorkout();
+    }
+
+    function openExercisePicker() {
+      filterPickerList();
+      openModal('exercise-picker-modal');
+    }
+
+    function filterPickerList() {
+      const q = document.getElementById('picker-search').value.toLowerCase();
+      const list = document.getElementById('picker-list');
+      list.innerHTML = '';
+      exercises.filter(e => e.name.toLowerCase().includes(q) || (e.muscle || '').toLowerCase().includes(q)).forEach(e => {
+        const item = document.createElement('div');
+        item.style.padding = '10px';
+        item.style.borderBottom = '1px solid var(--card-border)';
+        item.style.cursor = 'pointer';
+        item.innerText = `${e.name} (${e.muscle || 'General'})`;
+        item.onclick = () => {
+          currentWorkout.exercises.push({ name: e.name, type: e.type, muscle: e.muscle, sets: [{ val1: '', val2: '', done: false }] });
+          closeModal('exercise-picker-modal');
+          renderActiveWorkout();
+        };
+        list.appendChild(item);
+      });
+    }
+
+    function finishWorkout() {
+      if(!currentWorkout.exercises.length) {
+        alert("Please add at least one exercise.");
+        return;
+      }
+      clearInterval(workoutTimerInterval);
+
+      const bonusTotal = getWorkoutBonusXPTotal();
+      const bonusLabels = (currentWorkout.selectedBonuses || [])
+        .map(id => workoutBonusXPOptions.find(o => o.id === id))
+        .filter(Boolean);
+
+      currentWorkout.bonusXPAwarded = bonusTotal;
+      workoutLogs.unshift(currentWorkout);
+      localStorage.setItem('fitlog_logs', JSON.stringify(workoutLogs));
+      
+      const allDone = currentWorkout.exercises.every(e => e.sets.every(s => s.done));
+      if (allDone) {
+        checkBadges();
+      }
+
+      addXP(150 + bonusTotal);
+      currentWorkout = null;
+      renderWorkoutDashboard();
+
+      let msg = `Quest Complete! (+150 XP)`;
+      if (bonusLabels.length) {
+        msg += `\n\nBonus Perks:\n` + bonusLabels.map(o => `${o.icon} ${o.label} (+${o.xp} XP)`).join('\n');
+        msg += `\n\nTotal Bonus: +${bonusTotal} XP`;
+      }
+      alert(msg);
+    }
+
+    function cancelWorkout() {
+      if(confirm("Abandon current quest?")) {
+        clearInterval(workoutTimerInterval);
+        currentWorkout = null;
+        renderWorkoutDashboard();
+      }
+    }
+
+    function renderWorkoutDashboard() {
+      const container = document.getElementById('active-workout-container');
+      const info = calculateLevelAndXP(userXP);
+
+      container.innerHTML = `
+        <div class="rpg-banner">
+          <div class="rpg-header">
+            <span class="rpg-title" id="rpg-rank-title">${info.title}</span>
+            <span class="rpg-level" id="rpg-level-tag">Lvl ${info.level}</span>
+          </div>
+          <div class="xp-bar-container">
+            <div class="xp-bar-fill" id="xp-bar-fill" style="width:${info.progressPct}%"></div>
+          </div>
+          <div class="xp-text" id="xp-text-display">${userXP.toLocaleString()} / ${info.nextXpTotal.toLocaleString()} XP</div>
+        </div>
+
+        <div class="card">
+          <h2 style="margin-bottom: 12px; font-weight:800;">Start Quest</h2>
+          <label>Select Your Split Template:</label>
+          <div id="template-buttons" style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px; margin-bottom: 16px;"></div>
+          
+          <button class="btn btn-accent" onclick="startNewWorkout()">+ Blank Session</button>
+        </div>
+      `;
+      renderTemplates();
+    }
+
+    function renderTemplates() {
+      const container = document.getElementById('template-buttons');
+      if(!container) return;
+      container.innerHTML = '';
+      templates.forEach(t => {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-secondary';
+        btn.innerText = t.name;
+        btn.onclick = () => startNewWorkout(t.name, t.exercises);
+        container.appendChild(btn);
+      });
+    }
+
+    function requestNotificationPermission() {
+      if ("Notification" in window) {
+        Notification.requestPermission().then(p => alert(`Notification permission: ${p}`));
+      } else {
+        alert("Notifications not supported on this browser.");
+      }
+    }
+
+    function openTimerModal() { openModal('timer-modal'); }
+
+    function startTimer(seconds) {
+      closeModal('timer-modal');
+      clearInterval(restTimerInterval);
+      document.getElementById('timer-widget').style.display = 'flex';
+      
+      restTimerCount++;
+      localStorage.setItem('fitlog_timer_count', restTimerCount);
+      checkBadges();
+
+      remainingRestSeconds = seconds;
+      updateTimerDisplay(remainingRestSeconds);
+
+      restTimerInterval = setInterval(() => {
+        remainingRestSeconds--;
+        if(remainingRestSeconds <= 0) {
+          clearInterval(restTimerInterval);
+          document.getElementById('timer-display').innerText = "REST DONE!";
+          playChime();
+          if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+          if ("Notification" in window && Notification.permission === "granted") {
+            new Notification("FitLog Rest Timer", { body: "Rest time is over! Time for your next set." });
+          }
+        } else {
+          updateTimerDisplay(remainingRestSeconds);
+        }
+      }, 1000);
+    }
+
+    function adjustRestTimer(deltaSec) {
+      remainingRestSeconds = Math.max(0, remainingRestSeconds + deltaSec);
+      updateTimerDisplay(remainingRestSeconds);
+    }
+
+    function updateTimerDisplay(sec) {
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = (sec % 60).toString().padStart(2, '0');
+      document.getElementById('timer-display').innerText = `${m}:${s}`;
+    }
+
+    function stopTimer() {
+      clearInterval(restTimerInterval);
+      document.getElementById('timer-widget').style.display = 'none';
+    }
+
+    function openPlateCalculator() {
+      plateMathCount++;
+      localStorage.setItem('fitlog_plate_math_count', plateMathCount);
+      checkBadges();
+      calculatePlates();
+      openModal('plate-modal');
+    }
+
+    function calculatePlates() {
+      const target = parseFloat(document.getElementById('plate-target').value) || 0;
+      const bar = parseFloat(document.getElementById('bar-weight').value) || 45;
+      const res = document.getElementById('plate-results');
+
+      if(target < bar) {
+        res.innerHTML = "Target weight is less than barbell weight.";
+        return;
+      }
+
+      let perSide = (target - bar) / 2;
+      const availablePlates = [45, 35, 25, 10, 5, 2.5];
+      let breakdown = [];
+
+      availablePlates.forEach(p => {
+        const count = Math.floor(perSide / p);
+        if(count > 0) {
+          breakdown.push(`${count} × ${p} lb`);
+          perSide -= count * p;
+        }
+      });
+
+      if(breakdown.length === 0) {
+        res.innerHTML = "<strong>No plates needed on each side.</strong>";
+      } else {
+        res.innerHTML = `<strong>Per Side (${(target - bar) / 2} lbs):</strong><br>` + breakdown.join(', ');
+      }
+    }
+
+    function showProgressChart(exerciseName) {
+      const historyData = [];
+      const labels = [];
+
+      workoutLogs.slice().reverse().forEach(log => {
+        const found = log.exercises.find(e => e.name === exerciseName);
+        if(found && found.sets.length > 0) {
+          let max1RM = 0;
+          found.sets.forEach(s => {
+            const e1rm = calc1RM(s.val1, s.val2);
+            if(e1rm > max1RM) max1RM = e1rm;
+          });
+          if(max1RM > 0) {
+            labels.push(log.date);
+            historyData.push(max1RM);
+          }
+        }
+      });
+
+      if(historyData.length === 0) {
+        alert("Not enough historical data logged for this exercise yet.");
+        return;
+      }
+
+      document.getElementById('chart-title').innerText = `${exerciseName} - Estimated 1RM Trend`;
+      openModal('chart-modal');
+
+      const ctx = document.getElementById('progressChart').getContext('2d');
+      if(chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Estimated 1RM (lbs)',
+            data: historyData,
+            borderColor: '#8b5cf6',
+            backgroundColor: 'rgba(139, 92, 246, 0.25)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { ticks: { color: '#9ca3af' }, grid: { color: '#232538' } },
+            x: { ticks: { color: '#9ca3af' }, grid: { color: '#232538' } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function renderMuscleHeatmap() {
+      const container = document.getElementById('muscle-heatmap');
+      if(!container) return;
+
+      const muscleCounts = { Chest: 0, Back: 0, Legs: 0, Shoulders: 0, Arms: 0, Core: 0, Cardio: 0 };
+
+      workoutLogs.slice(0, 7).forEach(log => {
+        log.exercises.forEach(ex => {
+          const matched = exercises.find(e => e.name === ex.name);
+          const group = matched ? matched.muscle || 'Core' : 'Core';
+          const completedSetCount = ex.sets.filter(s => s.done).length;
+          if(muscleCounts[group] !== undefined) {
+            muscleCounts[group] += completedSetCount;
+          }
+        });
+      });
+
+      container.innerHTML = Object.entries(muscleCounts).map(([muscle, count]) => `
+        <div class="heatmap-item">
+          <span>${muscle}</span>
+          <strong style="color:${count > 10 ? 'var(--accent)' : 'var(--text)'}">${count} sets</strong>
+        </div>
+      `).join('');
+    }
+
+    function renderExerciseBank() {
+      const q = document.getElementById('bank-search')?.value.toLowerCase() || '';
+      const list = document.getElementById('exercise-list');
+      if(!list) return;
+      list.innerHTML = '';
+      
+      exercises.filter(e => e.name.toLowerCase().includes(q) || (e.muscle || '').toLowerCase().includes(q)).forEach(e => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.marginBottom = '8px';
+        card.style.display = 'flex';
+        card.style.justifyContent = 'space-between';
+        card.style.alignItems = 'center';
+        card.innerHTML = `
+          <div>
+            <strong>${e.name}</strong>
+            <p style="font-size:0.75rem; color:var(--text-muted);">${e.muscle || 'General'} | ${e.type === 'reps' ? 'Strength' : 'Cardio'}</p>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-sm btn-secondary" onclick="showProgressChart('${e.name}')">📈 Chart</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteExercise('${e.id}')">Delete</button>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function openAddExerciseModal() { openModal('add-exercise-modal'); }
+
+    function saveNewExercise() {
+      const name = document.getElementById('new-ex-name').value.trim();
+      const muscle = document.getElementById('new-ex-muscle').value;
+      const type = document.getElementById('new-ex-type').value;
+      if(!name) return alert("Enter exercise name.");
+
+      exercises.push({ id: 'ex_' + Date.now(), name, muscle, type });
+      localStorage.setItem('fitlog_exercises', JSON.stringify(exercises));
+      
+      customExCount++;
+      localStorage.setItem('fitlog_custom_ex_count', customExCount);
+      checkBadges();
+
+      document.getElementById('new-ex-name').value = '';
+      closeModal('add-exercise-modal');
+      renderExerciseBank();
+    }
+
+    function deleteExercise(id) {
+      exercises = exercises.filter(e => e.id !== id);
+      localStorage.setItem('fitlog_exercises', JSON.stringify(exercises));
+      renderExerciseBank();
+    }
+
+    function toggleAutoTimer(val) {
+      autoRestEnabled = val;
+      localStorage.setItem('fitlog_auto_timer', JSON.stringify(val));
+    }
+
+    function updateDefaultRestTime(val) {
+      defaultRestTime = parseInt(val);
+      localStorage.setItem('fitlog_rest_time', val);
+    }
+
+    function renderCalendar() {
+      const monthYearLabel = document.getElementById('calendar-month-year');
+      const grid = document.getElementById('calendar-grid');
+      if(!grid || !monthYearLabel) return;
+      grid.innerHTML = '';
+
+      const y = currentDate.getFullYear();
+      const m = currentDate.getMonth();
+
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      monthYearLabel.innerText = `${monthNames[m]} ${y}`;
+
+      ['S','M','T','W','T','F','S'].forEach(d => {
+        grid.innerHTML += `<div class="calendar-day-header">${d}</div>`;
+      });
+
+      const firstDay = new Date(y, m, 1).getDay();
+      const totalDays = new Date(y, m + 1, 0).getDate();
+      const todayStr = new Date().toLocaleDateString('en-CA');
+
+      for(let i=0; i<firstDay; i++) {
+        grid.innerHTML += `<div></div>`;
+      }
+
+      for(let day=1; day<=totalDays; day++) {
+        const dayStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const hasWorkout = workoutLogs.some(l => l.date === dayStr);
+        const isToday = dayStr === todayStr;
+
+        const dayEl = document.createElement('div');
+        dayEl.className = `calendar-day ${hasWorkout ? 'has-workout' : ''} ${isToday ? 'today' : ''}`;
+        dayEl.innerText = day;
+        dayEl.onclick = () => renderDayLogs(dayStr);
+        grid.appendChild(dayEl);
+      }
+    }
+
+    function changeMonth(delta) {
+      currentDate.setMonth(currentDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    function renderDayLogs(dateStr) {
+      const container = document.getElementById('selected-day-logs');
+      if(!container) return;
+      const logs = workoutLogs.filter(l => l.date === dateStr);
+      
+      if(!logs.length) {
+        container.innerHTML = `<p style="text-align:center; color:var(--text-muted); margin-top:16px;">No workouts logged on ${dateStr}</p>`;
+        return;
+      }
+
+      let html = `<h3 style="margin-top:16px; margin-bottom:8px;">Logs for ${dateStr}</h3>`;
+      logs.forEach(log => {
+        html += `<div class="card"><h4 style="color:var(--gold);">${log.title}</h4>`;
+        log.exercises.forEach(ex => {
+          html += `<p style="font-size:0.85rem; font-weight:600; margin-top:6px;">${ex.name}</p><ul style="padding-left:18px; font-size:0.8rem; color:var(--text-muted);">`;
+          ex.sets.forEach((s, idx) => {
+            html += `<li>Set ${idx+1}: ${s.val1 || 0} lbs × ${s.val2 || 0} reps ${s.done ? '✓' : ''}</li>`;
+          });
+          html += `</ul>`;
+        });
+        html += `</div>`;
+      });
+      container.innerHTML = html;
+    }
+
+    function exportData() {
+      backupExportCount++;
+      localStorage.setItem('fitlog_backup_count', backupExportCount);
+      checkBadges();
+
+      const data = { exercises, templates, workoutLogs, autoRestEnabled, defaultRestTime, userXP, unlockedBadges, plateMathCount, restTimerCount, customExCount, backupExportCount };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `fitlog_rpg_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+    }
+
+    function importData(evt) {
+      const file = evt.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if(parsed.exercises) localStorage.setItem('fitlog_exercises', JSON.stringify(parsed.exercises));
+          if(parsed.templates) localStorage.setItem('fitlog_templates', JSON.stringify(parsed.templates));
+          if(parsed.workoutLogs) localStorage.setItem('fitlog_logs', JSON.stringify(parsed.workoutLogs));
+          if(parsed.userXP !== undefined) localStorage.setItem('fitlog_xp', parsed.userXP);
+          if(parsed.unlockedBadges) localStorage.setItem('fitlog_badges', JSON.stringify(parsed.unlockedBadges));
+          if(parsed.plateMathCount !== undefined) localStorage.setItem('fitlog_plate_math_count', parsed.plateMathCount);
+          if(parsed.restTimerCount !== undefined) localStorage.setItem('fitlog_timer_count', parsed.restTimerCount);
+          if(parsed.customExCount !== undefined) localStorage.setItem('fitlog_custom_ex_count', parsed.customExCount);
+          if(parsed.backupExportCount !== undefined) localStorage.setItem('fitlog_backup_count', parsed.backupExportCount);
+          alert("Data imported successfully! Reloading...");
+          location.reload();
+        } catch(err) {
+          alert("Invalid JSON file.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function clearAllData() {
+      if(confirm("Are you sure you want to delete all saved workouts and RPG rank progress?")) {
+        localStorage.clear();
+        location.reload();
+      }
+    }
+
+    function registerServiceWorker() {
+      if ('serviceWorker' in navigator) {
+        const swCode = `
+          self.addEventListener('install', e => e.waitUntil(caches.open('fitlog-rpg-v2').then(c => c.addAll(['./']))));
+          self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
+        `;
+        const blob = new Blob([swCode], { type: 'application/javascript' });
+        navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+      }
+    }
+  </script>
+</body>
+</html>
